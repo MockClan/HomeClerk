@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="front" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFD66B"/>
+      <stop offset="1" stop-color="#F5AE2E"/>
+    </linearGradient>
+  </defs>
+  <!-- The folder's front pocket, shaped like a house: a roof overhanging straight walls, low enough
+       that the page still shows behind it, with a chimney and a door -->
+  <path fill="url(#front)" d="M640 470 h46 c8 0 14 6 14 14 v60 l-60 -34 z"/>
+  <path fill="url(#front)" d="M232 560 L482 430 Q512 414 542 430 L792 560 Q806 572 790 582 H756 V780 C756 798 742 812 724 812 H300 C282 812 268 798 268 780 V582 H234 Q218 572 232 560 Z"/>
+  <path fill="#FFFFFF" fill-opacity="0.55" d="M470 812 V706 C470 683 489 664 512 664 C535 664 554 683 554 706 V812 Z"/>
+</svg>

@@ -1,0 +1,32 @@
+{
+  // Copy to <BasePath>/household.json (default ~/HomeClerk/household.json) and fill in.
+  // Everything here is optional; canonical names become filename segments.
+
+  "people": [
+    { "name": "Jane_Smith" },
+    { "name": "Sam_Smith", "aliases": ["Samuel Smith"] }
+  ],
+
+  // Teams, troops, and classes: named in the file name of documents about the whole group
+  "groups": [
+    { "name": "Troop_101", "aliases": ["Unit 101", "BSA Troop 101"] }
+  ],
+
+  "vehicles": [
+    { "name": "2021_Toyota_RAV4", "vin": "2T3P1RFV0MC000000", "plates": ["ABC1234"] },
+    { "name": "2008_Honda_Civic", "notes": "former vehicle — sold 2024" }
+  ],
+
+  "pets": [
+    { "name": "Biscuit", "notes": "dog" }
+  ],
+
+  "vendors": [
+    { "name": "AHP", "aliases": ["Acme Health Plan"] },
+    { "name": "Affirm", "notes": "installment loan — area Financial with tag loan" }
+  ],
+
+  "notes": [
+    "Receipts from the hardware store for rental properties go under area Home with tag rental"
+  ]
+}

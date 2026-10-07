@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key>
+    <string>com.mockclan.homeclerk</string>
+    <key>CFBundleName</key>
+    <string>HomeClerk</string>
+    <key>CFBundleDisplayName</key>
+    <string>HomeClerk</string>
+    <key>CFBundleExecutable</key>
+    <string>HomeClerk</string>
+    <key>CFBundleIconFile</key>
+    <string>HomeClerk</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>© 2026 Jason Mock. MIT License.</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSRemindersFullAccessUsageDescription</key>
+    <string>HomeClerk adds reminders for bill due dates and document expirations to its own list in Reminders.</string>
+    <!-- Accept PDFs dropped on the app or sent by Image Capture's "Scan To" -->
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>PDF document</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>com.adobe.pdf</string>
+            </array>
+        </dict>
+    </array>
+    <!-- Finder: right-click PDFs ▸ Services (or Quick Actions) ▸ File with HomeClerk -->
+    <key>NSServices</key>
+    <array>
+        <dict>
+            <key>NSMenuItem</key>
+            <dict>
+                <key>default</key>
+                <string>File with HomeClerk</string>
+            </dict>
+            <key>NSMessage</key>
+            <string>fileWithHomeClerk</string>
+            <key>NSPortName</key>
+            <string>HomeClerk</string>
+            <key>NSSendFileTypes</key>
+            <array>
+                <string>com.adobe.pdf</string>
+            </array>
+            <key>NSRequiredContext</key>
+            <dict/>
+        </dict>
+    </array>
+</dict>
+</plist>

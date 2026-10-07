@@ -1,0 +1,44 @@
+name: Test
+
+# HomeClerkKit's tests, and a build of the app, on every pull request and every push to main
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A newer push to the same pull request replaces a run still going
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # The macOS 27 SDK (Apple Foundation Models) is only on GitHub's Xcode 27 image; see release.yml
+    runs-on: xcode-27
+    timeout-minutes: 30
+
+    steps:
+      # Pinned to the same commit as release.yml
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          persist-credentials: false
+
+      - name: Select Xcode
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_27*.app | grep -iv beta | sort -V | tail -1)
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+
+      - name: Test HomeClerkKit
+        working-directory: HomeClerkKit
+        run: swift test
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      # Catches app-side compile errors the package tests can't see
+      - name: Build the app
+        run: ./build.sh --debug

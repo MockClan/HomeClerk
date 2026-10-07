@@ -1,0 +1,27 @@
+# Build outputs (./build.sh)
+build/
+dist/
+*-osx-arm64.zip
+
+# Swift Package Manager build output
+*/.build/
+*/.swiftpm/
+
+# Xcode per-user state (the project itself is generated from project.yml)
+xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Editors and macOS
+.DS_Store
+.idea/
+.vscode/
+
+# Claude Code (local AI assistant config — not project config)
+.claude/
+
+# Personal documents and test answers must never be committed.
+# The accuracy test set lives outside the repo (~/HomeClerk-TestData); these are a backstop.
+*.pdf
+expected.json
+HomeClerk-TestData/
+DocuSort-TestData/

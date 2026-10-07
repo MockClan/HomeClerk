@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="back" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F4B740"/>
+      <stop offset="1" stop-color="#E39A1E"/>
+    </linearGradient>
+  </defs>
+  <!-- The folder's back, with its tab -->
+  <path fill="url(#back)" d="M310 340 H446 C460 340 472 346 480 357 L510 398 H714 C731 398 744 411 744 428 V770 C744 787 731 800 714 800 H310 C293 800 280 787 280 770 V370 C280 353 293 340 310 340 Z"/>
+</svg>

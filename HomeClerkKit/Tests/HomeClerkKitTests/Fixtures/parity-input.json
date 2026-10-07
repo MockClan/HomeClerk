@@ -1,0 +1,1706 @@
+{
+ "household": {
+  "people": [
+   {
+    "name": "Jane_Smith",
+    "aliases": [
+     "Janie Smith"
+    ]
+   },
+   {
+    "name": "Sam_Smith",
+    "aliases": [
+     "Samuel Smith"
+    ]
+   },
+   {
+    "name": "Alex_Rivera"
+   }
+  ],
+  "groups": [
+   {
+    "name": "Troop_101",
+    "aliases": [
+     "Unit 101",
+     "BSA Troop 101"
+    ],
+    "notes": "scout troop"
+   },
+   {
+    "name": "Team_Blue"
+   }
+  ],
+  "vehicles": [
+   {
+    "name": "2021_Toyota_RAV4",
+    "vin": "2T3P1RFV0MC000000",
+    "plates": [
+     "ABC1234"
+    ]
+   },
+   {
+    "name": "2011_Honda_Civic",
+    "notes": "former vehicle — sold 2024"
+   }
+  ],
+  "pets": [
+   {
+    "name": "Biscuit",
+    "notes": "dog"
+   },
+   {
+    "name": "Mochi",
+    "aliases": [
+     "Mochi Cat"
+    ]
+   }
+  ],
+  "vendors": [
+   {
+    "name": "Acme_Tire",
+    "aliases": [
+     "Acme Tire Co",
+     "AcmeTire"
+    ]
+   },
+   {
+    "name": "AHP",
+    "aliases": [
+     "Acme Health Plan"
+    ],
+    "notes": "health insurer"
+   },
+   {
+    "name": "Summit_Neurology"
+   }
+  ],
+  "notes": [
+   "Hardware store receipts for the rental go under area Home with tag rental"
+  ]
+ },
+ "facets": [
+  {
+   "area": "Other",
+   "document_type": "Other",
+   "tags": [
+    "data-breach"
+   ]
+  },
+  {
+   "area": "Other",
+   "document_type": "Other",
+   "tags": [
+    "DATA-BREACH"
+   ]
+  },
+  {
+   "area": "Security",
+   "document_type": "Other",
+   "tags": []
+  },
+  {
+   "area": "Other",
+   "document_type": "Other",
+   "tags": [
+    "tolls"
+   ]
+  },
+  {
+   "area": "Other",
+   "document_type": "Other",
+   "tags": [
+    "TOLLS"
+   ]
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Bill",
+   "tags": []
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Other",
+   "tags": [
+    "health-form"
+   ]
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Other",
+   "tags": [
+    "HEALTH-FORM"
+   ]
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Other",
+   "tags": [
+    "advancement"
+   ]
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Other",
+   "tags": [
+    "ADVANCEMENT"
+   ]
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Other",
+   "tags": [
+    "awards"
+   ]
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Other",
+   "tags": [
+    "AWARDS"
+   ]
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Other",
+   "tags": [
+    "membership"
+   ]
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Other",
+   "tags": [
+    "MEMBERSHIP"
+   ]
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Other",
+   "tags": [
+    "training"
+   ]
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Other",
+   "tags": [
+    "TRAINING"
+   ]
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Other",
+   "tags": [
+    "event"
+   ]
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Other",
+   "tags": [
+    "EVENT"
+   ]
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Other",
+   "tags": []
+  },
+  {
+   "area": "Medical",
+   "document_type": "Other",
+   "tags": [
+    "dental"
+   ]
+  },
+  {
+   "area": "Medical",
+   "document_type": "Other",
+   "tags": [
+    "DENTAL"
+   ]
+  },
+  {
+   "area": "Medical",
+   "document_type": "Other",
+   "tags": [
+    "vision"
+   ]
+  },
+  {
+   "area": "Medical",
+   "document_type": "Other",
+   "tags": [
+    "VISION"
+   ]
+  },
+  {
+   "area": "Medical",
+   "document_type": "Prior Authorization",
+   "tags": []
+  },
+  {
+   "area": "Medical",
+   "document_type": "Explanation of Benefits",
+   "tags": []
+  },
+  {
+   "area": "Medical",
+   "document_type": "Bill",
+   "tags": []
+  },
+  {
+   "area": "Medical",
+   "document_type": "Record",
+   "tags": []
+  },
+  {
+   "area": "Medical",
+   "document_type": "Other",
+   "tags": []
+  },
+  {
+   "area": "Insurance",
+   "document_type": "Other",
+   "tags": [
+    "auto"
+   ]
+  },
+  {
+   "area": "Insurance",
+   "document_type": "Other",
+   "tags": [
+    "AUTO"
+   ]
+  },
+  {
+   "area": "Insurance",
+   "document_type": "Other",
+   "tags": [
+    "home"
+   ]
+  },
+  {
+   "area": "Insurance",
+   "document_type": "Other",
+   "tags": [
+    "HOME"
+   ]
+  },
+  {
+   "area": "Insurance",
+   "document_type": "Other",
+   "tags": [
+    "life"
+   ]
+  },
+  {
+   "area": "Insurance",
+   "document_type": "Other",
+   "tags": [
+    "LIFE"
+   ]
+  },
+  {
+   "area": "Insurance",
+   "document_type": "Other",
+   "tags": [
+    "pet"
+   ]
+  },
+  {
+   "area": "Insurance",
+   "document_type": "Other",
+   "tags": [
+    "PET"
+   ]
+  },
+  {
+   "area": "Insurance",
+   "document_type": "Other",
+   "tags": [
+    "umbrella"
+   ]
+  },
+  {
+   "area": "Insurance",
+   "document_type": "Other",
+   "tags": [
+    "UMBRELLA"
+   ]
+  },
+  {
+   "area": "Insurance",
+   "document_type": "Other",
+   "tags": []
+  },
+  {
+   "area": "Other",
+   "document_type": "Pay Stub",
+   "tags": []
+  },
+  {
+   "area": "Taxes",
+   "document_type": "Other",
+   "tags": [
+    "w2"
+   ]
+  },
+  {
+   "area": "Taxes",
+   "document_type": "Other",
+   "tags": [
+    "W2"
+   ]
+  },
+  {
+   "area": "Taxes",
+   "document_type": "Other",
+   "tags": [
+    "1099"
+   ]
+  },
+  {
+   "area": "Taxes",
+   "document_type": "Other",
+   "tags": [
+    "1099"
+   ]
+  },
+  {
+   "area": "Taxes",
+   "document_type": "Other",
+   "tags": [
+    "k1"
+   ]
+  },
+  {
+   "area": "Taxes",
+   "document_type": "Other",
+   "tags": [
+    "K1"
+   ]
+  },
+  {
+   "area": "Taxes",
+   "document_type": "Tax Return",
+   "tags": []
+  },
+  {
+   "area": "Taxes",
+   "document_type": "Other",
+   "tags": []
+  },
+  {
+   "area": "Financial",
+   "document_type": "Other",
+   "tags": [
+    "credit-card"
+   ]
+  },
+  {
+   "area": "Financial",
+   "document_type": "Other",
+   "tags": [
+    "CREDIT-CARD"
+   ]
+  },
+  {
+   "area": "Financial",
+   "document_type": "Other",
+   "tags": [
+    "mortgage"
+   ]
+  },
+  {
+   "area": "Financial",
+   "document_type": "Other",
+   "tags": [
+    "MORTGAGE"
+   ]
+  },
+  {
+   "area": "Financial",
+   "document_type": "Other",
+   "tags": [
+    "loan"
+   ]
+  },
+  {
+   "area": "Financial",
+   "document_type": "Other",
+   "tags": [
+    "LOAN"
+   ]
+  },
+  {
+   "area": "Financial",
+   "document_type": "Other",
+   "tags": [
+    "retirement"
+   ]
+  },
+  {
+   "area": "Financial",
+   "document_type": "Other",
+   "tags": [
+    "RETIREMENT"
+   ]
+  },
+  {
+   "area": "Financial",
+   "document_type": "Other",
+   "tags": [
+    "investment"
+   ]
+  },
+  {
+   "area": "Financial",
+   "document_type": "Other",
+   "tags": [
+    "INVESTMENT"
+   ]
+  },
+  {
+   "area": "Financial",
+   "document_type": "Other",
+   "tags": []
+  },
+  {
+   "area": "Utilities",
+   "document_type": "Other",
+   "tags": [
+    "subscription"
+   ]
+  },
+  {
+   "area": "Utilities",
+   "document_type": "Other",
+   "tags": [
+    "SUBSCRIPTION"
+   ]
+  },
+  {
+   "area": "Utilities",
+   "document_type": "Other",
+   "tags": []
+  },
+  {
+   "area": "Vehicle",
+   "document_type": "Other",
+   "tags": [
+    "title"
+   ]
+  },
+  {
+   "area": "Vehicle",
+   "document_type": "Other",
+   "tags": [
+    "TITLE"
+   ]
+  },
+  {
+   "area": "Vehicle",
+   "document_type": "Other",
+   "tags": [
+    "purchase"
+   ]
+  },
+  {
+   "area": "Vehicle",
+   "document_type": "Other",
+   "tags": [
+    "PURCHASE"
+   ]
+  },
+  {
+   "area": "Vehicle",
+   "document_type": "Other",
+   "tags": [
+    "registration"
+   ]
+  },
+  {
+   "area": "Vehicle",
+   "document_type": "Other",
+   "tags": [
+    "REGISTRATION"
+   ]
+  },
+  {
+   "area": "Vehicle",
+   "document_type": "Warranty",
+   "tags": []
+  },
+  {
+   "area": "Vehicle",
+   "document_type": "Other",
+   "tags": []
+  },
+  {
+   "area": "Government",
+   "document_type": "Other",
+   "tags": [
+    "dmv"
+   ]
+  },
+  {
+   "area": "Government",
+   "document_type": "Other",
+   "tags": [
+    "DMV"
+   ]
+  },
+  {
+   "area": "Government",
+   "document_type": "Other",
+   "tags": [
+    "irs"
+   ]
+  },
+  {
+   "area": "Government",
+   "document_type": "Other",
+   "tags": [
+    "IRS"
+   ]
+  },
+  {
+   "area": "Government",
+   "document_type": "Other",
+   "tags": [
+    "social-security"
+   ]
+  },
+  {
+   "area": "Government",
+   "document_type": "Other",
+   "tags": [
+    "SOCIAL-SECURITY"
+   ]
+  },
+  {
+   "area": "Government",
+   "document_type": "Other",
+   "tags": []
+  },
+  {
+   "area": "Home",
+   "document_type": "Other",
+   "tags": [
+    "hoa"
+   ]
+  },
+  {
+   "area": "Home",
+   "document_type": "Other",
+   "tags": [
+    "HOA"
+   ]
+  },
+  {
+   "area": "Home",
+   "document_type": "Other",
+   "tags": [
+    "property-tax"
+   ]
+  },
+  {
+   "area": "Home",
+   "document_type": "Other",
+   "tags": [
+    "PROPERTY-TAX"
+   ]
+  },
+  {
+   "area": "Home",
+   "document_type": "Warranty",
+   "tags": []
+  },
+  {
+   "area": "Home",
+   "document_type": "Other",
+   "tags": []
+  },
+  {
+   "area": "Other",
+   "document_type": "Warranty",
+   "tags": []
+  },
+  {
+   "area": "Education",
+   "document_type": "Other",
+   "tags": [
+    "loan"
+   ]
+  },
+  {
+   "area": "Education",
+   "document_type": "Other",
+   "tags": [
+    "LOAN"
+   ]
+  },
+  {
+   "area": "Education",
+   "document_type": "Other",
+   "tags": []
+  },
+  {
+   "area": "Employment",
+   "document_type": "Other",
+   "tags": []
+  },
+  {
+   "area": "Legal",
+   "document_type": "Other",
+   "tags": []
+  },
+  {
+   "area": "Pet",
+   "document_type": "Other",
+   "tags": []
+  },
+  {
+   "area": "Charity",
+   "document_type": "Other",
+   "tags": []
+  },
+  {
+   "area": "Shopping",
+   "document_type": "Other",
+   "tags": []
+  },
+  {
+   "area": "Other",
+   "document_type": "Other",
+   "tags": []
+  },
+  {
+   "area": "Medical",
+   "document_type": "Bill"
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement"
+  },
+  {
+   "area": "Medical",
+   "document_type": "Receipt"
+  },
+  {
+   "area": "Medical",
+   "document_type": "Explanation of Benefits"
+  },
+  {
+   "area": "Medical",
+   "document_type": "Prior Authorization"
+  },
+  {
+   "area": "Medical",
+   "document_type": "Appeal"
+  },
+  {
+   "area": "Insurance",
+   "document_type": "Bill"
+  },
+  {
+   "area": "Insurance",
+   "document_type": "Statement"
+  },
+  {
+   "area": "Insurance",
+   "document_type": "Receipt"
+  },
+  {
+   "area": "Insurance",
+   "document_type": "Explanation of Benefits"
+  },
+  {
+   "area": "Insurance",
+   "document_type": "Prior Authorization"
+  },
+  {
+   "area": "Insurance",
+   "document_type": "Appeal"
+  },
+  {
+   "area": "Financial",
+   "document_type": "Bill"
+  },
+  {
+   "area": "Financial",
+   "document_type": "Statement"
+  },
+  {
+   "area": "Financial",
+   "document_type": "Receipt"
+  },
+  {
+   "area": "Financial",
+   "document_type": "Explanation of Benefits"
+  },
+  {
+   "area": "Financial",
+   "document_type": "Prior Authorization"
+  },
+  {
+   "area": "Financial",
+   "document_type": "Appeal"
+  },
+  {
+   "area": "Taxes",
+   "document_type": "Bill"
+  },
+  {
+   "area": "Taxes",
+   "document_type": "Statement"
+  },
+  {
+   "area": "Taxes",
+   "document_type": "Receipt"
+  },
+  {
+   "area": "Taxes",
+   "document_type": "Explanation of Benefits"
+  },
+  {
+   "area": "Taxes",
+   "document_type": "Prior Authorization"
+  },
+  {
+   "area": "Taxes",
+   "document_type": "Appeal"
+  },
+  {
+   "area": "Utilities",
+   "document_type": "Bill"
+  },
+  {
+   "area": "Utilities",
+   "document_type": "Statement"
+  },
+  {
+   "area": "Utilities",
+   "document_type": "Receipt"
+  },
+  {
+   "area": "Utilities",
+   "document_type": "Explanation of Benefits"
+  },
+  {
+   "area": "Utilities",
+   "document_type": "Prior Authorization"
+  },
+  {
+   "area": "Utilities",
+   "document_type": "Appeal"
+  },
+  {
+   "area": "Home",
+   "document_type": "Bill"
+  },
+  {
+   "area": "Home",
+   "document_type": "Statement"
+  },
+  {
+   "area": "Home",
+   "document_type": "Receipt"
+  },
+  {
+   "area": "Home",
+   "document_type": "Explanation of Benefits"
+  },
+  {
+   "area": "Home",
+   "document_type": "Prior Authorization"
+  },
+  {
+   "area": "Home",
+   "document_type": "Appeal"
+  },
+  {
+   "area": "Vehicle",
+   "document_type": "Bill"
+  },
+  {
+   "area": "Vehicle",
+   "document_type": "Statement"
+  },
+  {
+   "area": "Vehicle",
+   "document_type": "Receipt"
+  },
+  {
+   "area": "Vehicle",
+   "document_type": "Explanation of Benefits"
+  },
+  {
+   "area": "Vehicle",
+   "document_type": "Prior Authorization"
+  },
+  {
+   "area": "Vehicle",
+   "document_type": "Appeal"
+  },
+  {
+   "area": "Pet",
+   "document_type": "Bill"
+  },
+  {
+   "area": "Pet",
+   "document_type": "Statement"
+  },
+  {
+   "area": "Pet",
+   "document_type": "Receipt"
+  },
+  {
+   "area": "Pet",
+   "document_type": "Explanation of Benefits"
+  },
+  {
+   "area": "Pet",
+   "document_type": "Prior Authorization"
+  },
+  {
+   "area": "Pet",
+   "document_type": "Appeal"
+  },
+  {
+   "area": "Education",
+   "document_type": "Bill"
+  },
+  {
+   "area": "Education",
+   "document_type": "Statement"
+  },
+  {
+   "area": "Education",
+   "document_type": "Receipt"
+  },
+  {
+   "area": "Education",
+   "document_type": "Explanation of Benefits"
+  },
+  {
+   "area": "Education",
+   "document_type": "Prior Authorization"
+  },
+  {
+   "area": "Education",
+   "document_type": "Appeal"
+  },
+  {
+   "area": "Employment",
+   "document_type": "Bill"
+  },
+  {
+   "area": "Employment",
+   "document_type": "Statement"
+  },
+  {
+   "area": "Employment",
+   "document_type": "Receipt"
+  },
+  {
+   "area": "Employment",
+   "document_type": "Explanation of Benefits"
+  },
+  {
+   "area": "Employment",
+   "document_type": "Prior Authorization"
+  },
+  {
+   "area": "Employment",
+   "document_type": "Appeal"
+  },
+  {
+   "area": "Government",
+   "document_type": "Bill"
+  },
+  {
+   "area": "Government",
+   "document_type": "Statement"
+  },
+  {
+   "area": "Government",
+   "document_type": "Receipt"
+  },
+  {
+   "area": "Government",
+   "document_type": "Explanation of Benefits"
+  },
+  {
+   "area": "Government",
+   "document_type": "Prior Authorization"
+  },
+  {
+   "area": "Government",
+   "document_type": "Appeal"
+  },
+  {
+   "area": "Legal",
+   "document_type": "Bill"
+  },
+  {
+   "area": "Legal",
+   "document_type": "Statement"
+  },
+  {
+   "area": "Legal",
+   "document_type": "Receipt"
+  },
+  {
+   "area": "Legal",
+   "document_type": "Explanation of Benefits"
+  },
+  {
+   "area": "Legal",
+   "document_type": "Prior Authorization"
+  },
+  {
+   "area": "Legal",
+   "document_type": "Appeal"
+  },
+  {
+   "area": "Security",
+   "document_type": "Bill"
+  },
+  {
+   "area": "Security",
+   "document_type": "Statement"
+  },
+  {
+   "area": "Security",
+   "document_type": "Receipt"
+  },
+  {
+   "area": "Security",
+   "document_type": "Explanation of Benefits"
+  },
+  {
+   "area": "Security",
+   "document_type": "Prior Authorization"
+  },
+  {
+   "area": "Security",
+   "document_type": "Appeal"
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Bill"
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Statement"
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Receipt"
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Explanation of Benefits"
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Prior Authorization"
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Appeal"
+  },
+  {
+   "area": "Shopping",
+   "document_type": "Bill"
+  },
+  {
+   "area": "Shopping",
+   "document_type": "Statement"
+  },
+  {
+   "area": "Shopping",
+   "document_type": "Receipt"
+  },
+  {
+   "area": "Shopping",
+   "document_type": "Explanation of Benefits"
+  },
+  {
+   "area": "Shopping",
+   "document_type": "Prior Authorization"
+  },
+  {
+   "area": "Shopping",
+   "document_type": "Appeal"
+  },
+  {
+   "area": "Charity",
+   "document_type": "Bill"
+  },
+  {
+   "area": "Charity",
+   "document_type": "Statement"
+  },
+  {
+   "area": "Charity",
+   "document_type": "Receipt"
+  },
+  {
+   "area": "Charity",
+   "document_type": "Explanation of Benefits"
+  },
+  {
+   "area": "Charity",
+   "document_type": "Prior Authorization"
+  },
+  {
+   "area": "Charity",
+   "document_type": "Appeal"
+  },
+  {
+   "area": "Other",
+   "document_type": "Bill"
+  },
+  {
+   "area": "Other",
+   "document_type": "Statement"
+  },
+  {
+   "area": "Other",
+   "document_type": "Receipt"
+  },
+  {
+   "area": "Other",
+   "document_type": "Explanation of Benefits"
+  },
+  {
+   "area": "Other",
+   "document_type": "Prior Authorization"
+  },
+  {
+   "area": "Other",
+   "document_type": "Appeal"
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "Jane_Smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "Jane_Smith",
+   "amount": 0.005
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "Jane_Smith",
+   "amount": 0.015
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "Jane_Smith",
+   "amount": 2.675
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "Jane_Smith",
+   "amount": 1000
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "Jane_Smith",
+   "amount": -12.345
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "Jane_Smith",
+   "amount": null
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "The_Acme_Bank_of_Ohio_N.A.",
+   "description": "Patient Statement",
+   "person": "Jane_Smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Acme Widgets, Inc.",
+   "description": "Patient Statement",
+   "person": "Jane_Smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "acme_widgets_llc",
+   "description": "Patient Statement",
+   "person": "Jane_Smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Bank_of_America",
+   "description": "Patient Statement",
+   "person": "Jane_Smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "First_Bank_of_New_York_Mellon_Corp",
+   "description": "Patient Statement",
+   "person": "Jane_Smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Theater_Co",
+   "description": "Patient Statement",
+   "person": "Jane_Smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "the_union",
+   "description": "Patient Statement",
+   "person": "Jane_Smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "Jane_Smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-03",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "Jane_Smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "March 2026",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "Jane_Smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": " 2026-03-09 ",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "Jane_Smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "Jane_Smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Subrogation_Request\\",
+   "person": "Jane_Smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "a/b:c",
+   "person": "Jane_Smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "__Lead__Trail__",
+   "person": "Jane_Smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "-Dash-",
+   "person": "Jane_Smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Café Receipt",
+   "person": "Jane_Smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "JANE_A_SMITH",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "jane smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "Jane Q Public Smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "SAMUEL_SMITH",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "Alex_Smith",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "JOHN_DOE",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "Pat_McDonald",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "UNIT_101",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "Troop 101",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "team blue",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "O'BRIEN",
+   "amount": 120.5
+  },
+  {
+   "area": "Medical",
+   "document_type": "Statement",
+   "document_date": "2026-01-14",
+   "vendor": "Summit Neurology of Ohio",
+   "description": "Patient Statement",
+   "person": "ÉMILE_ZOLA",
+   "amount": 120.5
+  },
+  {
+   "area": "Pet",
+   "document_type": "Certificate",
+   "document_date": "2026-03-09",
+   "vendor": "Sunny_Vet",
+   "person": "Biscuit",
+   "pet": "biscuit",
+   "description": "Rabies_Certificate"
+  },
+  {
+   "area": "Pet",
+   "document_type": "Certificate",
+   "vendor": "Sunny_Vet",
+   "pet": "MOCHI CAT",
+   "description": "Vaccine_Record"
+  },
+  {
+   "area": "Vehicle",
+   "document_type": "Bill",
+   "tags": [
+    "tolls"
+   ],
+   "document_date": "2026-04-24",
+   "vendor": "Toll_Authority",
+   "vehicle": "2021 toyota rav-4",
+   "description": "Toll_Bill",
+   "amount": 31.4
+  },
+  {
+   "area": "Vehicle",
+   "document_type": "Bill",
+   "tags": [
+    "maintenance"
+   ],
+   "vendor": "ACME TIRE",
+   "vehicle": "2011_Honda_Civic",
+   "description": "Oil_Change",
+   "amount": 45
+  },
+  {
+   "area": "Insurance",
+   "document_type": "Policy",
+   "tags": [
+    "auto"
+   ],
+   "vendor": "Acme Health Plan",
+   "description": "Declarations"
+  },
+  {
+   "area": "Other",
+   "document_type": "Other"
+  },
+  {},
+  {
+   "area": "Hobbies",
+   "document_type": "Other",
+   "vendor": "Model Train Club"
+  },
+  {
+   "area": "  ",
+   "document_type": "Other"
+  },
+  {
+   "area": "medical",
+   "document_type": "prior authorization"
+  },
+  {
+   "area": "Financial",
+   "document_type": "Statement",
+   "tags": [
+    "Loan",
+    "credit-card"
+   ],
+   "vendor": "Acme_Auto_Finance",
+   "vehicle": "2021_Toyota_RAV4",
+   "description": "Auto_Loan_Statement",
+   "amount": 412
+  },
+  {
+   "area": "Scouting",
+   "document_type": "Form",
+   "tags": [
+    "health-form"
+   ],
+   "vendor": "BSA",
+   "person": "Unit 101",
+   "description": "Campout_Roster",
+   "document_date": "2025-06-07"
+  },
+  {
+   "area": "Utilities",
+   "document_type": "Bill",
+   "vendor": "Acme_Power",
+   "description": "Electric_Bill",
+   "due_date": "2026-04-14",
+   "amount": 1234.5,
+   "tags": [
+    "utilities"
+   ]
+  },
+  {
+   "area": "Utilities",
+   "document_type": "Bill",
+   "vendor": "Acme_Power",
+   "description": "Electric_Bill",
+   "due_date": "2026-03-15",
+   "amount": 88
+  },
+  {
+   "area": "Utilities",
+   "document_type": "Bill",
+   "vendor": "Acme_Power",
+   "description": "Electric_Bill",
+   "due_date": "2026-04-01",
+   "amount": -12.345
+  },
+  {
+   "area": "Utilities",
+   "document_type": "Bill",
+   "vendor": "Acme_Power",
+   "description": "Electric_Bill",
+   "due_date": "2026-04-14"
+  },
+  {
+   "area": "Utilities",
+   "document_type": "Bill",
+   "vendor": "Acme_Power",
+   "description": "Electric_Bill",
+   "due_date": "2026-02-30",
+   "amount": 5
+  },
+  {
+   "area": "Utilities",
+   "document_type": "Bill",
+   "vendor": "Acme_Power",
+   "description": "Electric_Bill",
+   "due_date": "04/14/2026",
+   "amount": 5
+  },
+  {
+   "area": "Pet",
+   "document_type": "Certificate",
+   "vendor": "Sunny_Vet",
+   "pet": "Biscuit",
+   "description": "Rabies_Certificate",
+   "expires_on": "2027-03-12",
+   "tags": [
+    "vaccination",
+    "data-breach",
+    "w2"
+   ]
+  },
+  {
+   "area": "Pet",
+   "document_type": "Certificate",
+   "vendor": "Sunny_Vet",
+   "pet": "Biscuit",
+   "description": "Rabies_Certificate",
+   "expires_on": "2026-04-10"
+  },
+  {
+   "area": "Pet",
+   "document_type": "Certificate",
+   "vendor": "Sunny_Vet",
+   "description": "Rabies_Certificate",
+   "expires_on": "2026-04-01"
+  },
+  {
+   "area": "Vehicle",
+   "document_type": "Notice",
+   "vendor": "State_DMV",
+   "vehicle": "2021_Toyota_RAV4",
+   "person": "Jane_Smith",
+   "description": "Registration_Renewal",
+   "expires_on": "2026-06-30",
+   "due_date": "2026-06-15",
+   "amount": 75.25,
+   "tags": [
+    "registration"
+   ]
+  },
+  {
+   "area": "Insurance",
+   "document_type": "Policy",
+   "vendor": "Acme_Insurance",
+   "person": "Sam_Smith",
+   "description": "Auto_Policy",
+   "expires_on": "2026-12-31"
+  },
+  {
+   "area": "Other",
+   "document_type": "Other",
+   "vendor": "",
+   "description": "",
+   "expires_on": "2026-09-09"
+  }
+ ],
+ "texts": [
+  "Dear Jane Smith, we are writing to let you know about a data security incident involving a vendor that provides services to your health plan. Information that may have been involved includes names, addresses, dates of birth, and member identification numbers.",
+  "Dear Sam Smith, we are writing to let you know about a data security incident involving a vendor that provides services to your health plan. Information that may have been involved includes names, addresses, dates of birth, and member identification numbers.",
+  "Dear Jane Smith, we are writing to let you know about a data securitv incident involving a vendor that provides services to your health plan. Information that may have been involved includes names, addresses, dates of birth, and member identification numbers.",
+  "",
+  "   \n\t ",
+  "Hi",
+  "ab cd ef",
+  "ACME TIRE invoice 12345 total 45.00",
+  "Café résumé naïve façade — 2026",
+  "Straße KELVIN K sign İstanbul",
+  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog ",
+  "123 4567 89012 abc_def ghi-jkl"
+ ],
+ "vendors": [
+  "The_Acme_Bank",
+  "Acme_Inc",
+  "Acme_Inc_LLC",
+  "Acme_N.A.",
+  "Acme_NA",
+  "Acme_of_Ohio",
+  "Acme_Bank_of_Ohio_N.A.",
+  "Acme_of_United_States_Inc",
+  "Acme_of_Ohio_Valley_Branch",
+  "Bank_of_America",
+  "Acme_Co",
+  "Acme_Corp_Ltd",
+  "THE_ACME",
+  "Theatre",
+  "Acme_of_Narnia",
+  "acme_inc",
+  "Acme_PLC",
+  "Acme_of_new_york",
+  "Acme_Bank_of_Ohio_N.A.",
+  "University_of_Ohio",
+  "Acme_Motors_of_America_Inc",
+  "Bank_of_America_Corp",
+  "Trust_of_Ohio"
+ ],
+ "userTexts": [
+  {
+   "text": "Some OCR text",
+   "pageCount": 1
+  },
+  {
+   "text": "Two pages",
+   "pageCount": 2
+  },
+  {
+   "text": "",
+   "pageCount": 1
+  },
+  {
+   "text": "  \n ",
+   "pageCount": 3
+  }
+ ],
+ "replies": [
+  {
+   "json": "{\"summary\": \"One utility bill.\", \"documents\": [{\"first_page\": 1, \"last_page\": 1, \"document_type\": \"Bill\", \"area\": \"Utilities\", \"tags\": [], \"vendor\": \"Acme Power\", \"description\": \"Electric_Bill\", \"document_date\": \"2026-02-03\", \"due_date\": \"2026-02-05\", \"expires_on\": \"\", \"amount\": 88.12, \"person\": \"\", \"vehicle\": \"\", \"pet\": \"\", \"confidence\": 0.92}]}",
+   "pageCount": 1
+  },
+  {
+   "json": "{\"summary\": \"Two documents.\", \"documents\": [{\"first_page\": 1, \"last_page\": 2, \"document_type\": \"Bill\", \"area\": \"Utilities\", \"tags\": [], \"vendor\": \"Acme Power\", \"description\": \"Electric_Bill\", \"document_date\": \"2026-02-03\", \"due_date\": \"2026-02-05\", \"expires_on\": \"\", \"amount\": 88.12, \"person\": \"\", \"vehicle\": \"\", \"pet\": \"\", \"confidence\": 0.92}, {\"first_page\": 3, \"last_page\": 9, \"document_type\": \"Receipt\", \"area\": \"Vehicle\", \"tags\": [\"Maintenance\", \" TOLLS \", \"maintenance\"], \"vendor\": \"AcmeTire\", \"description\": \"Electric_Bill\", \"document_date\": \"2026-02-03\", \"due_date\": \"2026-02-05\", \"expires_on\": \"\", \"amount\": 88.12, \"person\": \"JANE_A_SMITH\", \"vehicle\": \"\", \"pet\": \"\", \"confidence\": 0.92}]}",
+   "pageCount": 4,
+   "canonicalize": true
+  },
+  {
+   "json": "{\"summary\": \"Primary tag.\", \"documents\": [{\"first_page\": 1, \"last_page\": 1, \"document_type\": \"Bill\", \"area\": \"Utilities\", \"tags\": [\"dental\", \"Pharmacy\"], \"vendor\": \"Acme Power\", \"description\": \"Electric_Bill\", \"document_date\": \"2026-02-03\", \"due_date\": \"2026-02-05\", \"expires_on\": \"\", \"amount\": 88.12, \"person\": \"\", \"vehicle\": \"\", \"pet\": \"\", \"confidence\": 0.92, \"primary_tag\": \"dental\"}]}",
+   "pageCount": 1
+  },
+  {
+   "json": "{\"summary\": \"No primary.\", \"documents\": [{\"first_page\": 1, \"last_page\": 1, \"document_type\": \"Bill\", \"area\": \"Utilities\", \"tags\": [], \"vendor\": \"Acme Power\", \"description\": \"Electric_Bill\", \"document_date\": \"2026-02-03\", \"due_date\": \"2026-02-05\", \"expires_on\": \"\", \"amount\": 88.12, \"person\": \"\", \"vehicle\": \"\", \"pet\": \"\", \"confidence\": 0.92, \"primary_tag\": \"none\"}]}",
+   "pageCount": 1
+  },
+  {
+   "json": "{\"summary\": \"Out of range.\", \"documents\": [{\"first_page\": 0, \"last_page\": 0, \"document_type\": \"Bill\", \"area\": \"Utilities\", \"tags\": [], \"vendor\": \"Acme Power\", \"description\": \"Electric_Bill\", \"document_date\": \"2026-02-03\", \"due_date\": \"2026-02-05\", \"expires_on\": \"\", \"amount\": 88.12, \"person\": \"\", \"vehicle\": \"\", \"pet\": \"\", \"confidence\": 1.7}, {\"first_page\": 5, \"last_page\": 2, \"document_type\": \"Bill\", \"area\": \"Utilities\", \"tags\": [], \"vendor\": \"Acme Power\", \"description\": \"Electric_Bill\", \"document_date\": \"2026-02-03\", \"due_date\": \"2026-02-05\", \"expires_on\": \"\", \"amount\": 88.12, \"person\": \"\", \"vehicle\": \"\", \"pet\": \"\", \"confidence\": -0.2}]}",
+   "pageCount": 3
+  },
+  {
+   "json": "{\"summary\": \"Null amount.\", \"documents\": [{\"first_page\": 1, \"last_page\": 1, \"document_type\": \"Bill\", \"area\": \"Utilities\", \"tags\": [], \"vendor\": \"Acme Power\", \"description\": \"Electric_Bill\", \"document_date\": \"2026-02-03\", \"due_date\": \"2026-02-05\", \"expires_on\": \"\", \"amount\": null, \"person\": \"UNIT_101\", \"vehicle\": \"\", \"pet\": \"\", \"confidence\": 0.92}]}",
+   "pageCount": 1,
+   "canonicalize": true
+  },
+  {
+   "json": "{\"summary\": \"Nothing.\", \"documents\": []}",
+   "pageCount": 1
+  },
+  {
+   "json": "not json at all",
+   "pageCount": 1
+  },
+  {
+   "json": "{\"summary\": \"Missing fields.\", \"documents\": [{\"first_page\": 1, \"last_page\": 1}]}",
+   "pageCount": 1
+  }
+ ]
+}

@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    # The app needs the macOS 27 SDK (Apple Foundation Models), which only GitHub's Xcode 27 image has
+    # (in preview as of October 2026; macos-26 stops at the macOS 26.5 SDK). Apple Silicon (arm64).
+    runs-on: xcode-27
+
+    permissions:
+      contents: write   # required to create the GitHub Release
+
+    steps:
+      # Actions are pinned to commit SHAs so a moved tag can't change what runs with our token
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          persist-credentials: false
+
+      # The newest released Xcode 27 on the runner, never a beta
+      - name: Select Xcode
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_27*.app | grep -iv beta | sort -V | tail -1)
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+          xcrun --sdk macosx --show-sdk-version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      # Builds dist/HomeClerk.app and HomeClerk-<tag>-osx-arm64.zip of it
+      - name: Build
+        env:
+          VERSION: ${{ github.ref_name }}                   # e.g. v1.0.0
+        run: ./build.sh
+
+      - name: Record zip
+        run: |
+          ZIP="HomeClerk-${GITHUB_REF_NAME}-osx-arm64.zip"
+          echo "ZIP=${ZIP}" >> "$GITHUB_ENV"
+          echo "SHA256=$(shasum -a 256 "${ZIP}" | awk '{print $1}')" >> "$GITHUB_ENV"
+
+      # The release's notes: this version's section of CHANGELOG.md, or GitHub's generated notes
+      # when there isn't one
+      - name: Release notes
+        run: |
+          if scripts/release-notes.sh "${GITHUB_REF_NAME}" > release-notes.md; then
+            echo "NOTES=release-notes.md" >> "$GITHUB_ENV"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65  # v2
+        with:
+          files: ${{ env.ZIP }}
+          body_path: ${{ env.NOTES }}
+          generate_release_notes: ${{ env.NOTES == '' }}
+
+      # This repo is its own Homebrew tap (Casks/homeclerk.rb), so the release bumps the cask on main:
+      #   brew tap mockclan/homeclerk https://github.com/MockClan/HomeClerk
+      - name: Update Homebrew cask
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA256: ${{ env.SHA256 }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+
+          # The tag is checked out detached; the cask bump goes on the latest main. gh supplies
+          # GH_TOKEN to git, so the token never appears in a URL, the remote config, or the log.
+          gh auth setup-git
+          git fetch --depth=1 origin main
+          git checkout -B main origin/main
+
+          # The url is built from version, so only these two change
+          sed -i '' \
+            -e "s|^  version \".*\"|  version \"${VERSION}\"|" \
+            -e "s|^  sha256 \".*\"|  sha256 \"${SHA256}\"|" \
+            Casks/homeclerk.rb
+
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git commit -am "Update the Homebrew cask to ${TAG}"
+          git push origin main

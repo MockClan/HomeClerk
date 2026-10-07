@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- A page sliding into the folder, tilted as if just dropped in -->
+  <g transform="rotate(-7 512 470)">
+    <path fill="#FFFFFF" d="M356 196 h236 l92 92 v392 c0 16 -13 28 -28 28 h-300 c-16 0 -28 -12 -28 -28 v-456 c0 -16 12 -28 28 -28 z"/>
+    <path fill="#D9E2EE" d="M592 196 l92 92 h-72 c-11 0 -20 -9 -20 -20 z"/>
+    <g fill="#B8C6D9">
+      <rect x="388" y="300" width="170" height="22" rx="11"/>
+      <rect x="388" y="352" width="256" height="22" rx="11"/>
+      <rect x="388" y="404" width="256" height="22" rx="11"/>
+      <rect x="388" y="456" width="200" height="22" rx="11"/>
+    </g>
+  </g>
+</svg>
