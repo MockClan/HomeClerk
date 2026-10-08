@@ -3,6 +3,7 @@
 #
 # Install:
 #   brew tap mockclan/homeclerk https://github.com/MockClan/HomeClerk
+#   brew trust mockclan/homeclerk
 #   brew install --cask homeclerk
 
 cask "homeclerk" do

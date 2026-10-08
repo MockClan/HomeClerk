@@ -45,6 +45,7 @@ This triggers `.github/workflows/release.yml`, which:
 
 ```bash
 brew tap mockclan/homeclerk https://github.com/MockClan/HomeClerk
+brew trust mockclan/homeclerk     # recent Homebrew loads a third-party tap only once it's trusted
 brew install --cask homeclerk
 ```
 

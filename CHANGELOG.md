@@ -39,6 +39,6 @@ consistently, in the right folder, searchable, and tagged in Finder.
   Claude key, folder, Reminders list, and Mail rule. Move the old app to the Trash afterwards.
 
 **Installing**
-- `brew tap mockclan/homeclerk https://github.com/MockClan/HomeClerk` then `brew install --cask homeclerk`,
-  or download the zip below. HomeClerk isn't signed with an Apple Developer ID, so open it from
+- `brew tap mockclan/homeclerk https://github.com/MockClan/HomeClerk`, `brew trust mockclan/homeclerk`,
+  then `brew install --cask homeclerk`, or download the zip below. HomeClerk isn't signed with an Apple Developer ID, so open it from
   Applications, then choose **Open Anyway** in System Settings ▸ Privacy & Security.

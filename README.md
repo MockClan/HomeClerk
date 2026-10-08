@@ -108,8 +108,11 @@ Or install a release with Homebrew — this repository is its own tap:
 
 ```bash
 brew tap mockclan/homeclerk https://github.com/MockClan/HomeClerk
+brew trust mockclan/homeclerk
 brew install --cask homeclerk
 ```
+
+(`brew trust` is how recent Homebrew lets a tap outside its own load; older versions skip it.)
 
 (Or download the zip from [Releases](https://github.com/MockClan/HomeClerk/releases).) HomeClerk isn't
 signed with an Apple Developer ID, so macOS blocks its first launch after each install or upgrade:
