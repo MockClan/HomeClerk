@@ -7,7 +7,7 @@
 
 cask "homeclerk" do
   version "1.0.0"
-  sha256 "834f3e29a310f3c41d420f50895c66dabc99153609ce28b345d8e43ef9b5f45e"
+  sha256 "4fc21c4ff036af228a758b3d181ffc1c1fecdf8498e69e3db2d67aeb39de13ad"
 
   url "https://github.com/MockClan/HomeClerk/releases/download/v#{version}/HomeClerk-v#{version}-osx-arm64.zip"
   name "HomeClerk"
