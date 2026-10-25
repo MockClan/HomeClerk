@@ -751,6 +751,9 @@ final class HomeClerkModel {
             } else {
                 working.append(WorkItem(id: source.path, stage: stage.rawValue, engine: engine))
             }
+        case let .separated(source, parts):
+            record(.added, source.lastPathComponent,
+                   parts == 1 ? "Blank pages removed; reading it now" : "Separated into \(parts) scans at its blank pages", nil)
         case let .skipped(source), let .finished(source):
             finish(source)
         case let .ollama(status):

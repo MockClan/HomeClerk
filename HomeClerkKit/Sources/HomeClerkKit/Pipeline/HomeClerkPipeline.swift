@@ -111,14 +111,18 @@ public final class HomeClerkPipeline: @unchecked Sendable {
         }
         switch provider {
         case .ollama:
+            // Reads a pile in one go: with numbered pages it splits piles better than the boundary
+            // step, which loses context from page excerpts (measured on the split test set)
             return OllamaFacetAnalyzer(baseURL: settings.analysisOllamaURL, model: settings.ollamaModel,
                                        sendImages: settings.sendPageImages, maxImagePages: settings.maxImagePages,
                                        taxonomy: taxonomy, profile: profile,
                                        session: settings.localReadersOnly ? LocalReaderTransport.session : .shared,
                                        unloadMinutes: settings.ollamaUnloadMinutes)
         case .apple:
-            return AppleFacetAnalyzer(model: settings.appleModel, sendImages: settings.sendPageImages,
-                                      maxImagePages: settings.maxImagePages, taxonomy: taxonomy, profile: profile)
+            // Apple's small model can't track a pile's page ranges in one go, so it finds where each
+            // document starts first, then reads each one on its own
+            return BoundaryFindingAnalyzer(AppleFacetAnalyzer(model: settings.appleModel, sendImages: settings.sendPageImages,
+                                      maxImagePages: settings.maxImagePages, taxonomy: taxonomy, profile: profile))
         case .claude:
             let key = Keychain.readAPIKey()
             guard let key else {

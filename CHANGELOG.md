@@ -5,6 +5,15 @@ it to the version and date, and the release workflow publishes that section as t
 
 ## Unreleased
 
+**Scanning a pile**
+- A pile of documents scanned as one PDF is split far more reliably. Pages are numbered for the
+  reader, and pages about one transaction or matter stay together — including an invoice and the
+  receipt for paying it.
+- Apple Intelligence finds where each document starts first, then reads each one on its own.
+- Separator pages: put a blank page (or, for double-sided scanning, a blank sheet) between documents
+  and turn on Settings ▸ General ▸ Between documents in a pile. Each section is read on its own, and
+  double-sided scans lose the blank backs of single-sided pages.
+
 ## 1.0.0 — 2026-10-07
 
 The first release. HomeClerk watches a folder for scanned PDFs, reads each one, and files it: named

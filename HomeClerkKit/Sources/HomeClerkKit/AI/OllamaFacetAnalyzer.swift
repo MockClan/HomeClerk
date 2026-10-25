@@ -94,3 +94,33 @@ public struct OllamaFacetAnalyzer: FacetAnalyzer {
         }
     }
 }
+
+extension OllamaFacetAnalyzer: BoundaryFinding {
+    public func documentStarts(excerpts: String, pageCount: Int) async -> [Int]? {
+        let schema = JSONValue.object([
+            ("type", .string("object")),
+            ("properties", .object([("starts", .object([("type", .string("array")), ("items", .object([("type", .string("integer"))]))]))])),
+            ("required", .array([.string("starts")]))
+        ])
+        let body = JSONValue.object([
+            ("model", .string(model)),
+            ("stream", .bool(false)),
+            ("format", schema),
+            ("keep_alive", Self.keepAlive(minutes: unloadMinutes)),
+            ("options", .object([("temperature", .number(0)), ("num_ctx", .number(8192))])),
+            ("messages", .array([
+                .object([("role", .string("system")), ("content", .string(DocumentBoundaries.instructions))]),
+                .object([("role", .string("user")), ("content", .string(DocumentBoundaries.prompt(excerpts: excerpts, pageCount: pageCount)))])
+            ]))
+        ])
+        var request = URLRequest(url: baseURL.appendingPathComponent("api/chat"), timeoutInterval: 300)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "content-type")
+        request.httpBody = Data(body.serialized.utf8)
+        guard let (data, response) = try? await session.data(for: request),
+              (response as? HTTPURLResponse)?.statusCode == 200,
+              let content = (try? JSONValue(parsing: String(decoding: data, as: UTF8.self)))?["message"]?["content"]?.stringValue,
+              let starts = (try? JSONValue(parsing: content))?["starts"]?.arrayValue else { return nil }
+        return starts.compactMap { $0.doubleValue.flatMap(Int.init(checking:)) }
+    }
+}

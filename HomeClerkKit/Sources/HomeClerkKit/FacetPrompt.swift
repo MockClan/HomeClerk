@@ -76,9 +76,12 @@ public enum FacetPrompt {
           clear, 0.7–0.9 with some ambiguity, below 0.5 when the scan is unreadable.
 
         A PDF sometimes holds several unrelated documents scanned together — different issuers, dates, or
-        document types. Return one entry per document with its first and last page. A single document
-        returns one entry covering every page. Multi-page statements, forms with continuation pages, and
-        letters with their enclosures are one document.
+        document types. Return one entry per document with its first and last page, using the page
+        numbers the OCR text marks ("--- Page 3 of 8 ---"); every page belongs to exactly one entry. A
+        single document returns one entry covering every page. A new document usually starts with its
+        own letterhead, title, or date. Pages about the same transaction or matter are one document:
+        multi-page statements ("Page 2 of 3"), forms with continuation pages, letters with their
+        enclosures, and an invoice with the receipt for paying it.
 
         Distinctions that come up often:
         - Explanation of Benefits describes a claim already processed (billed, plan paid, you owe; "this

@@ -81,9 +81,9 @@ public actor DocumentProcessor {
         }
 
         events(.stage(source: file, stage: .reading, engine: nil))
-        let ocrText: String, pageCount: Int
+        let pageTexts: [String]
         do {
-            (ocrText, pageCount) = try await TextRecognizer.text(ofPDF: file, strict: false)
+            pageTexts = try await TextRecognizer.pageTexts(ofPDF: file, strict: false)
         } catch is CancellationError {
             throw CancellationError()
         } catch {
@@ -91,6 +91,8 @@ public actor DocumentProcessor {
             return
         }
         try Task.checkCancellation()
+        if settings.scanSeparator != .none, try separate(file, pageTexts: pageTexts) { return }
+        let ocrText = TextRecognizer.joined(pageTexts), pageCount = pageTexts.count
 
         // Retries and fallback happen inside the analyzer, which reports the "analyzing" stage
         let analysis = await analyzer.analyze(ocrText: ocrText, pageCount: pageCount, pdf: file)
@@ -133,6 +135,31 @@ public actor DocumentProcessor {
             // The whole scan's text spans several documents, so only an identical file matches later
             duplicates.register(ocrText: ocrText, sha256: sha256, facets: nil, label: "\(file.lastPathComponent) (split)")
         }
+    }
+
+    /// Cuts a pile at its separator pages into scans that go back into the inbox, each read on its
+    /// own. True when the scan was dealt with here (separated, or all blank); false to read it as is.
+    private func separate(_ file: URL, pageTexts: [String]) throws -> Bool {
+        let document = try PageRenderer.open(file)
+        var blank: [Bool] = []
+        for index in pageTexts.indices {
+            try Task.checkCancellation()
+            let image = try PageRenderer.image(of: document, page: index, dpi: Separators.dpi)
+            blank.append(Separators.isBlank(image, text: pageTexts[index]))
+        }
+        let sections = Separators.sections(blank: blank, mode: settings.scanSeparator)
+        guard !sections.isEmpty else {
+            sendToReview(file, reason: "Every page of this scan is blank.")
+            return true
+        }
+        guard sections != [Array(1...pageTexts.count)] else { return false }
+        let parts = try Separators.write(sections, of: file, to: settings.inboxFolder)
+        // The pile itself is kept in _originals when copies are kept; otherwise it goes to the Trash
+        if settings.preserveOriginals { try FileManager.default.removeItem(at: file) }
+        else { try FileManager.default.trashItem(at: file, resultingItemURL: nil) }
+        log.info("Separated a scan into \(parts.count) parts")
+        events(.separated(source: file, parts: parts.count))
+        return true
     }
 
     private func fileDocument(_ source: URL, original: URL, _ document: FacetDocument, _ analysis: FacetAnalysis) async throws -> URL {

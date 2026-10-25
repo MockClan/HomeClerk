@@ -18,22 +18,45 @@ public enum TextRecognizer {
         }.value
     }
 
-    /// Every page's text, with the page-break marker the prompt expects between pages. Pages are
-    /// rendered and recognized one at a time, so a long scan never holds every page image at once.
-    /// A page that can't be recognized contributes empty text unless `strict`.
+    /// Every page's text, each under a numbered marker ("--- Page 2 of 5 ---") so the reader can
+    /// tell where one document ends and the next begins.
     public static func text(ofPDF pdf: URL, strict: Bool = true) async throws -> (text: String, pages: Int) {
+        let pages = try await pageTexts(ofPDF: pdf, strict: strict)
+        return (joined(pages), pages.count)
+    }
+
+    /// Each page's text, in order. Pages are rendered and recognized one at a time, so a long scan
+    /// never holds every page image at once. A page that can't be recognized is empty unless `strict`.
+    public static func pageTexts(ofPDF pdf: URL, strict: Bool = true) async throws -> [String] {
         let document = try PageRenderer.open(pdf)
-        var parts: [String] = []
+        var pages: [String] = []
         for index in 0..<document.pageCount {
             try Task.checkCancellation()
             let image = try PageRenderer.image(of: document, page: index, dpi: PageRenderer.ocrDPI)
             do {
-                parts.append(try await text(in: image))
+                pages.append(try await text(in: image))
             } catch {
                 if strict { throw error }
-                parts.append("")
+                pages.append("")
             }
         }
-        return (parts.joined(separator: "\n--- Page Break ---\n\n"), document.pageCount)
+        return pages
+    }
+
+    /// Pages' text under numbered markers, as the reader receives it.
+    public static func joined(_ pages: [String]) -> String {
+        pages.enumerated().map { "--- Page \($0.offset + 1) of \(pages.count) ---\n\($0.element)" }.joined(separator: "\n\n")
+    }
+
+    /// Each page's text back out of `joined` — or out of the unnumbered page breaks that OCR text
+    /// saved by earlier versions has.
+    public static func pages(of text: String) -> [String] {
+        if text.contains("\n--- Page Break ---\n\n") || !text.hasPrefix("--- Page 1 of ") {
+            return text.components(separatedBy: "\n--- Page Break ---\n\n")
+        }
+        return text.components(separatedBy: "\n\n--- Page ").enumerated().map { index, part in
+            let body = index == 0 ? String(part.dropFirst("--- Page ".count)) : part
+            return body.firstIndex(of: "\n").map { String(body[body.index(after: $0)...]) } ?? ""
+        }
     }
 }
