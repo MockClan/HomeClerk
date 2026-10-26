@@ -143,8 +143,11 @@ public enum FacetSchema {
     }
 
     /// Parses a schema-shaped reply, rejecting invalid page ranges and normalizing tags.
+    /// `wholeScan`: the reply describes one document covering every page — its first document's
+    /// details, at the lowest confidence given — whatever pages it names (for a reader whose
+    /// boundaries are found separately).
     public static func parse(_ json: String, pageCount: Int, modelName: String,
-                             profile: HouseholdProfile? = nil) -> FacetAnalysis {
+                             profile: HouseholdProfile? = nil, wholeScan: Bool = false) -> FacetAnalysis {
         do {
             let reply = try JSONValue(parsing: json)
             guard let items = reply["documents"]?.arrayValue, !items.isEmpty else {
@@ -162,7 +165,7 @@ public enum FacetSchema {
 
                 // One document is the whole scan, whatever pages the model wrote — Apple's on-device
                 // model sometimes writes nonsense such as 5337–5341 for a 5-page scan.
-                if items.count == 1 {
+                if items.count == 1 || wholeScan {
                     return FacetDocument(firstPage: 1, lastPage: pageCount, facets: facets,
                                          confidence: min(max(item["confidence"]?.doubleValue ?? 0, 0), 1))
                 }
@@ -178,6 +181,11 @@ public enum FacetSchema {
                 let last = min(reportedLast, pageCount)
                 return FacetDocument(firstPage: first, lastPage: last, facets: facets,
                                      confidence: min(max(item["confidence"]?.doubleValue ?? 0, 0), 1))
+            }
+            if wholeScan, let first = documents.first {
+                return FacetAnalysis(documents: [FacetDocument(firstPage: 1, lastPage: pageCount, facets: first.facets,
+                                                               confidence: documents.map(\.confidence).min() ?? first.confidence)],
+                                     summary: reply["summary"]?.stringValue ?? "")
             }
             return FacetAnalysis(documents: documents, summary: reply["summary"]?.stringValue ?? "")
         } catch {

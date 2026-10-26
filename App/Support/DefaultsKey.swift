@@ -22,6 +22,8 @@ enum DefaultsKey {
     // Remembered answers and history
     static let keepAnyway = "KeepAnyway"
     static let leaveAsIs = "LeaveAsIs"
+    static let keepSeparate = "KeepSeparate"
+    static let keepBothFiled = "KeepBothFiled"
     static let savedSearches = "SavedSearches"
     static let modelTimings = "ModelTimings"
 

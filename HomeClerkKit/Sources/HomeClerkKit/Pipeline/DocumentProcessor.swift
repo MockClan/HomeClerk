@@ -81,9 +81,9 @@ public actor DocumentProcessor {
         }
 
         events(.stage(source: file, stage: .reading, engine: nil))
-        let ocrText: String, pageCount: Int
+        let pageTexts: [String]
         do {
-            (ocrText, pageCount) = try await TextRecognizer.text(ofPDF: file, strict: false)
+            pageTexts = try await TextRecognizer.pageTexts(ofPDF: file, strict: false)
         } catch is CancellationError {
             throw CancellationError()
         } catch {
@@ -91,6 +91,8 @@ public actor DocumentProcessor {
             return
         }
         try Task.checkCancellation()
+        if settings.scanSeparator != .none, try separate(file, pageTexts: pageTexts) { return }
+        let ocrText = TextRecognizer.joined(pageTexts), pageCount = pageTexts.count
 
         // Retries and fallback happen inside the analyzer, which reports the "analyzing" stage
         let analysis = await analyzer.analyze(ocrText: ocrText, pageCount: pageCount, pdf: file)
@@ -108,6 +110,33 @@ public actor DocumentProcessor {
 
         // Fallback models are less accurate, so their results must clear a higher bar
         let threshold = analysis.usedFallback ? settings.fallbackMinConfidence : settings.minConfidenceThreshold
+        // In a pile, the documents the reader is sure of are filed, those already filed from an
+        // earlier scan go to _duplicates, and only the others wait in Review
+        let unsure = analysis.documents.filter { $0.confidence < threshold }
+        if analysis.documents.count > 1, unsure.count < analysis.documents.count {
+            let sure = analysis.documents.filter { $0.confidence >= threshold }
+            // Checked against what was filed before this pile, not each other: copies of one form in a pile are deliberate
+            let repeats = sure.compactMap { document in
+                duplicates.nearDuplicate(ocrText: Self.text(of: document, in: pageTexts), facets: document.facets)
+                    .map { (document: document, original: $0) }
+            }
+            let filing = sure.filter { document in !repeats.contains { $0.document == document } }
+            if filing.isEmpty, unsure.isEmpty {
+                sendToDuplicates(file, original: repeats[0].original, why: DuplicateItem.wholePileReason,
+                                 analyzedBy: analysis)
+                return
+            }
+            if !filing.isEmpty {
+                if let filed = try await fileAndSetAside(file, analysis, filing: filing, unsure: unsure,
+                                                         repeats: repeats, threshold: threshold) {
+                    // The whole scan's text spans several documents, so it only matches an identical file
+                    duplicates.register(ocrText: ocrText, sha256: sha256, facets: nil, label: "\(file.lastPathComponent) (split)")
+                    register(filing, filedAt: filed, pageTexts: pageTexts)
+                }
+                return
+            }
+            // Nothing sure is left to file: the whole scan waits in Review
+        }
         if let lowest = analysis.documents.map(\.confidence).filter({ $0 < threshold }).min() {
             let fallbackNote = analysis.usedFallback
                 ? " (fallback \(analysis.model); primary failed: \(analysis.primaryError ?? ""))" : ""
@@ -129,10 +158,49 @@ public actor DocumentProcessor {
             // Register only after filing succeeded, so a failure can't strand a rescan in _duplicates
             duplicates.register(ocrText: ocrText, sha256: sha256, facets: document.facets,
                                 label: relativeToOrganized(destination))
-        } else if await splitAndFile(file, analysis) {
-            // The whole scan's text spans several documents, so only an identical file matches later
-            duplicates.register(ocrText: ocrText, sha256: sha256, facets: nil, label: "\(file.lastPathComponent) (split)")
         }
+    }
+
+    /// The text of a document's pages in a pile, as it would read scanned on its own.
+    static func text(of document: FacetDocument, in pageTexts: [String]) -> String {
+        guard document.firstPage >= 1, document.firstPage <= document.lastPage, document.lastPage <= pageTexts.count else { return "" }
+        return TextRecognizer.joined(Array(pageTexts[(document.firstPage - 1)...(document.lastPage - 1)]))
+    }
+
+    /// Records each document filed from a pile, so a later scan of any one of them is caught.
+    private func register(_ documents: [FacetDocument], filedAt destinations: [URL], pageTexts: [String]) {
+        for (document, destination) in zip(documents, destinations) {
+            duplicates.register(ocrText: Self.text(of: document, in: pageTexts), sha256: nil, facets: document.facets,
+                                label: relativeToOrganized(destination))
+        }
+    }
+
+    /// Cuts a pile at its separator pages into scans that go back into the inbox, each read on its
+    /// own. True when the scan was dealt with here (separated, or all blank); false to read it as is.
+    private func separate(_ file: URL, pageTexts: [String]) throws -> Bool {
+        let document = try PageRenderer.open(file)
+        var blank: [Bool] = []
+        for index in pageTexts.indices {
+            try Task.checkCancellation()
+            let image = try PageRenderer.image(of: document, page: index, dpi: Separators.dpi)
+            blank.append(Separators.isBlank(image, text: pageTexts[index]))
+        }
+        let sections = Separators.sections(blank: blank, mode: settings.scanSeparator)
+        guard !sections.isEmpty else {
+            sendToReview(file, reason: "Every page of this scan is blank.")
+            return true
+        }
+        guard sections != [Array(1...pageTexts.count)] else { return false }
+        let parts = try Separators.write(sections, of: file, to: settings.inboxFolder)
+        // The pile goes to the Trash, unless _originals holds a verified copy of it
+        if settings.preserveOriginals, Originals.keepsVerifiedCopy(of: try Data(contentsOf: file), in: settings.originalsFolder) {
+            try FileManager.default.removeItem(at: file)
+        } else {
+            try FileManager.default.trashItem(at: file, resultingItemURL: nil)
+        }
+        log.info("Separated a scan into \(parts.count) parts")
+        events(.separated(source: file, parts: parts.count))
+        return true
     }
 
     private func fileDocument(_ source: URL, original: URL, _ document: FacetDocument, _ analysis: FacetAnalysis) async throws -> URL {
@@ -170,20 +238,82 @@ public actor DocumentProcessor {
         return outputs.map(\.destination)
     }
 
-    private func splitAndFile(_ file: URL, _ analysis: FacetAnalysis) async -> Bool {
-        do {
-            _ = try await fileDocuments(file, documents: analysis.documents, analysis: analysis, splitting: true)
-            return true
-        } catch is CancellationError { return false }
-        catch {
-            log.error("Split filing failed: \(error.localizedDescription, privacy: .private)")
-            // Keep the source at the journal's recorded path if rollback needs startup recovery.
-            if FilingTransaction(settings: settings, index: index).isPending(source: file) {
-                events(.problem("Split filing failed; source preserved for recovery: \(error.localizedDescription)"))
+    /// Files the documents of a pile in `filing`. Each document in `unsure` goes to Review as its
+    /// own scan (its pages, its proposal, and why), and each in `repeats` to _duplicates beside the
+    /// document it repeats. If filing fails, the parts are taken back and the whole scan goes to
+    /// Review instead. Returns where the documents were filed, or nil when they weren't.
+    private func fileAndSetAside(_ file: URL, _ analysis: FacetAnalysis, filing: [FacetDocument], unsure: [FacetDocument],
+                                 repeats: [(document: FacetDocument, original: String)], threshold: Double) async throws -> [URL]? {
+        let stem = file.deletingPathExtension().lastPathComponent
+        var parts: [URL] = []
+        func takeBack() {
+            for part in parts {
+                try? FileManager.default.removeItem(at: part)
+                ReviewProposal.deleteSidecars(for: part)
             }
-            else { sendToReview(file, reason: "Split filing failed; original preserved. \(error.localizedDescription)", proposal: analysis) }
-            return false
         }
+        func setAside(_ document: FacetDocument, in folder: URL, reason: (String) -> String) throws -> URL {
+            try FileOrganizer.requireInside(folder, settings.basePath)
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let pages = document.firstPage...document.lastPage
+            let label = pages.count == 1 ? "page \(pages.lowerBound)" : "pages \(pages.lowerBound)–\(pages.upperBound)"
+            let part = FileOrganizer.unique(folder.appendingPathComponent("\(stem) \(label).pdf"))
+            try PDFTools.split(file, pages: pages, to: part)
+            parts.append(part)
+            var proposal = FacetAnalysis(documents: [FacetDocument(firstPage: 1, lastPage: pages.count, facets: document.facets,
+                                                                   confidence: document.confidence)],
+                                         summary: analysis.summary)
+            proposal.model = analysis.model
+            proposal.usedFallback = analysis.usedFallback
+            try ReviewProposal.save(proposal, for: part)
+            try reason(label).write(to: ReviewProposal.reasonURL(for: part), atomically: true, encoding: .utf8)
+            return part
+        }
+        var reviewed: [URL] = [], repeated: [URL] = []
+        do {
+            for document in unsure {
+                reviewed.append(try setAside(document, in: settings.reviewFolder) { label in
+                    "Confidence \(Self.percent(document.confidence)) below threshold \(Self.percent(threshold)) for "
+                        + "\(label) of \(file.lastPathComponent); the rest of that scan was filed.\n\n\(analysis.summary)"
+                })
+            }
+            for (document, original) in repeats {
+                repeated.append(try setAside(document, in: settings.duplicatesFolder) { label in
+                    "Duplicate of: \(original)\nWhy: \(label) of \(file.lastPathComponent) has the same text and the same "
+                        + "vendor, date, person, and amount\n"
+                        + "If this is actually a different document, choose Not a Duplicate in HomeClerk ▸ Tidy Up."
+                })
+            }
+        } catch {
+            takeBack()
+            sendToReview(file, reason: "Couldn't set aside part of the scan: \(error.localizedDescription)", proposal: analysis)
+            return nil
+        }
+        let filed: [URL]
+        do {
+            filed = try await fileDocuments(file, documents: filing, analysis: analysis, splitting: true)
+        } catch is CancellationError {
+            takeBack()
+            throw CancellationError()
+        } catch {
+            takeBack()
+            log.error("Pile filing failed: \(error.localizedDescription, privacy: .private)")
+            if FilingTransaction(settings: settings, index: index).isPending(source: file) {
+                events(.problem("Filing failed; source preserved for recovery: \(error.localizedDescription)"))
+            } else {
+                sendToReview(file, reason: "Filing failed; original preserved. \(error.localizedDescription)", proposal: analysis)
+            }
+            return nil
+        }
+        for (part, document) in zip(reviewed, unsure) {
+            events(.review(path: part, reason: "Confidence \(Self.percent(document.confidence)) below threshold \(Self.percent(threshold))",
+                           source: file, engine: analysis.model, fallback: analysis.usedFallback))
+        }
+        for (part, match) in zip(repeated, repeats) {
+            events(.duplicate(path: part, original: match.original, source: file, engine: analysis.model,
+                              fallback: analysis.usedFallback))
+        }
+        return filed
     }
 
     private func sendToDuplicates(_ file: URL, original: String, why: String, analyzedBy: FacetAnalysis? = nil) {

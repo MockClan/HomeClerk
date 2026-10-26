@@ -14,6 +14,8 @@ public enum PipelineEvent: Sendable, Equatable {
     case filed(path: URL, folder: String, source: URL, engine: String?, fallback: Bool)
     case review(path: URL, reason: String, source: URL, engine: String?, fallback: Bool)
     case duplicate(path: URL, original: String, source: URL, engine: String?, fallback: Bool)
+    /// A pile was cut at its separator pages into `parts` scans, which went back into the inbox.
+    case separated(source: URL, parts: Int)
     /// Processing of a scan is over, whatever its outcome — sent even when nothing else was (say,
     /// another program moved the file away mid-way), so nothing is left showing as in progress.
     case finished(source: URL)

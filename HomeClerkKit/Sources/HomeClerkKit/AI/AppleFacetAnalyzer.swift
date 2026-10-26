@@ -74,7 +74,10 @@ public struct AppleFacetAnalyzer: FacetAnalyzer {
                 : ocrText
             switch await generate(prompt: FacetPrompt.buildUserText(ocrText: text, pageCount: pageCount), images: attempt.images) {
             case let .success(json):
-                var analysis = FacetSchema.parse(json, pageCount: pageCount, modelName: modelName, profile: profile)
+                // Apple's page numbers are unreliable; where documents start is found separately
+                // (BoundaryFindingAnalyzer), so whatever it read is one document
+                var analysis = FacetSchema.parse(json, pageCount: pageCount, modelName: modelName, profile: profile,
+                                                 wholeScan: true)
                 analysis.summary = "[\(attempt.label)] \(analysis.summary)"
                 return analysis
             case let .failure(failure):
@@ -86,6 +89,23 @@ public struct AppleFacetAnalyzer: FacetAnalyzer {
             }
         }
         return .failed("\(modelName): document doesn't fit the context window (\(lastError))")
+    }
+
+    /// A session with the chosen model — on-device or Private Cloud Compute — when it's available.
+    @available(macOS 27, *)
+    func makeSession(instructions: String) -> Result<LanguageModelSession, GenerationFailure> {
+        if model == "private-cloud" {
+            let cloud = PrivateCloudComputeLanguageModel()
+            guard cloud.isAvailable else {
+                return .failure(.init(kind: .unavailable, message: "Private Cloud Compute unavailable: \(cloud.availability)"))
+            }
+            return .success(LanguageModelSession(model: cloud, instructions: instructions))
+        }
+        let onDevice = SystemLanguageModel.default
+        guard onDevice.isAvailable else {
+            return .failure(.init(kind: .unavailable, message: "Apple Intelligence unavailable: \(onDevice.availability)"))
+        }
+        return .success(LanguageModelSession(model: onDevice, instructions: instructions))
     }
 
     struct GenerationFailure: Error {
@@ -108,18 +128,9 @@ public struct AppleFacetAnalyzer: FacetAnalyzer {
         }
 
         let session: LanguageModelSession
-        if model == "private-cloud" {
-            let cloud = PrivateCloudComputeLanguageModel()
-            guard cloud.isAvailable else {
-                return .failure(.init(kind: .unavailable, message: "Private Cloud Compute unavailable: \(cloud.availability)"))
-            }
-            session = LanguageModelSession(model: cloud, instructions: instructions)
-        } else {
-            let onDevice = SystemLanguageModel.default
-            guard onDevice.isAvailable else {
-                return .failure(.init(kind: .unavailable, message: "Apple Intelligence unavailable: \(onDevice.availability)"))
-            }
-            session = LanguageModelSession(model: onDevice, instructions: instructions)
+        switch makeSession(instructions: instructions) {
+        case let .success(made): session = made
+        case let .failure(failure): return .failure(failure)
         }
 
         do {
@@ -227,5 +238,31 @@ actor AppleModelGate {
             if waiting.isEmpty { busy = false } else { waiting.removeFirst().resume() }
         }
         return await body()
+    }
+}
+
+#if canImport(FoundationModels)
+/// The boundary step's answer.
+@available(macOS 27, *)
+@Generable
+struct DocumentStarts {
+    @Guide(description: "Every page that begins a new document, including page 1")
+    var starts: [Int]
+}
+#endif
+
+extension AppleFacetAnalyzer: BoundaryFinding {
+    public func documentStarts(excerpts: String, pageCount: Int) async -> [Int]? {
+        #if canImport(FoundationModels)
+        if #available(macOS 27, *) {
+            return await AppleModelGate.shared.run {
+                guard case let .success(session) = makeSession(instructions: DocumentBoundaries.instructions) else { return nil }
+                let prompt = DocumentBoundaries.prompt(excerpts: excerpts, pageCount: pageCount)
+                return try? await session.respond(to: prompt, generating: DocumentStarts.self,
+                                                  options: GenerationOptions(samplingMode: .greedy)).content.starts
+            }
+        }
+        #endif
+        return nil
     }
 }

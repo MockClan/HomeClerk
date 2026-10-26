@@ -44,6 +44,14 @@ public final class FullTextIndex: @unchecked Sendable {
         return matches
     }
 
+    /// Each document's text by path, from the cache where it can, which is then saved.
+    public func texts(of documents: [DocumentIndex.Entry]) -> [String: String] {
+        var texts: [String: String] = [:]
+        for entry in documents where !Task.isCancelled { texts[entry.path] = text(of: entry) }
+        save()
+        return texts
+    }
+
     /// A document's text, from the cache while the file is unchanged.
     func text(of entry: DocumentIndex.Entry) -> String {
         let attributes = try? FileManager.default.attributesOfItem(atPath: entry.path)

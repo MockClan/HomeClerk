@@ -297,6 +297,29 @@ public struct BackfillApplier: Sendable {
         return (documents.count, documents.filter { $0.ocrText.utf16.count >= DuplicateDetector.minTextLength }.count)
     }
 
+    /// Records filed documents the duplicate index doesn't know — those filed from a pile before
+    /// each document in one was recorded — and the description of those recorded before it was
+    /// compared, leaving everything else as it is.
+    @discardableResult
+    public static func recordUnrecordedDuplicates(_ index: DocumentIndex, duplicates: DuplicateDetector, organized: URL) -> Int {
+        // Labelled as the processor labels what it files, so each document is only ever recorded once
+        let known = duplicates.labels()
+        var unrecorded: [(ocrText: String, sha256: String?, facets: DocumentFacets?, label: String)] = []
+        var facets: [String: DocumentFacets] = [:]
+        for entry in DocumentLibrary.load(index).documents {
+            let url = URL(fileURLWithPath: entry.path)
+            guard let label = FileOrganizer.relativePath(url, in: organized), !label.isEmpty,
+                  FileManager.default.fileExists(atPath: url.path) else { continue }
+            facets[label] = entry.facets
+            guard !known.contains(label) else { continue }
+            // With its bytes' hash too, so an identical file dropped in again is caught without reading it
+            unrecorded.append((Finisher.text(of: url), (try? Data(contentsOf: url)).map(sha256), entry.facets, label))
+        }
+        duplicates.register(unrecorded)
+        duplicates.describe(facets)
+        return unrecorded.count
+    }
+
     static func sha256(_ data: Data) -> String { SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined() }
 
     /// Removes folders left empty (a .DS_Store alone counts as empty), deepest first.
