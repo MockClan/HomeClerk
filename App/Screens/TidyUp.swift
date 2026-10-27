@@ -12,6 +12,113 @@ extension HomeClerkModel {
     var keeping: Set<String> { Set(UserDefaults.standard.stringArray(forKey: DefaultsKey.keepAnyway) ?? []) }
 
 
+    /// Documents filed twice that you chose to keep both of, by pair.
+    var keepingBoth: Set<String> { Set(UserDefaults.standard.stringArray(forKey: DefaultsKey.keepBothFiled) ?? []) }
+
+    func keepBoth(_ pair: FiledDuplicate, undoManager: UndoManager?) {
+        let before = keepingBoth
+        UserDefaults.standard.set(Array(before.union([pair.id])), forKey: DefaultsKey.keepBothFiled)
+        undoManager?.registerUndo(withTarget: self) { model in
+            MainActor.assumeIsolated {
+                UserDefaults.standard.set(Array(before), forKey: DefaultsKey.keepBothFiled)
+                model.refreshTidy()
+            }
+        }
+        undoManager?.setActionName("Keep Both")
+        filedDuplicates.removeAll { $0.id == pair.id }
+    }
+
+    /// Keeps one filed copy and moves the other to the Trash; ⌘Z puts both back.
+    func keepFiledCopy(_ keep: DocumentIndex.Entry, removing extra: DocumentIndex.Entry, undoManager: UndoManager?) {
+        guard let actions = reviewActions, beginDocumentAction([keep.path, extra.path]) else { return }
+        filedDuplicates.removeAll { [$0.keep.path, $0.extra.path].contains(extra.path) }
+        Task {
+            defer { endDocumentAction([keep.path, extra.path]); refreshTidy(); documentsChanged += 1; updateSpotlight() }
+            do {
+                let kept = try await actions.keep(keep, removing: extra)
+                undoManager?.registerUndo(withTarget: self) { model in
+                    MainActor.assumeIsolated {
+                        Task {
+                            do { try await model.reviewActions?.undo(kept) } catch {
+                                model.record(.problem, "Couldn't undo Keep This One", error.localizedDescription, nil)
+                            }
+                            model.refreshTidy()
+                            model.documentsChanged += 1
+                        }
+                    }
+                }
+                undoManager?.setActionName("Keep This One")
+                tidyProblem = nil
+            } catch {
+                tidyProblem = "Couldn't keep that copy: \(error.localizedDescription)"
+                record(.problem, "Couldn't keep that copy", error.localizedDescription, keep.path)
+            }
+        }
+    }
+
+    /// The scan set aside is the better one: it replaces the filed copy; ⌘Z puts the filed copy back.
+    func keepScanInstead(_ item: DuplicateItem, undoManager: UndoManager?) {
+        guard let actions = reviewActions, let filed = item.original,
+              beginDocumentAction([item.url.path, filed.path]) else { return }
+        Task {
+            defer { endDocumentAction([item.url.path, filed.path]); refreshTidy(); documentsChanged += 1; updateSpotlight() }
+            do {
+                let replaced = try await actions.keepScanInstead(item)
+                undoManager?.registerUndo(withTarget: self) { model in
+                    MainActor.assumeIsolated {
+                        model.undoStep("Keep This One") { try model.reviewActions?.undo(replaced) }
+                        model.refreshTidy()
+                        model.documentsChanged += 1
+                    }
+                }
+                undoManager?.setActionName("Keep This One")
+                tidyProblem = nil
+            } catch {
+                tidyProblem = "Couldn't keep the new scan: \(error.localizedDescription)"
+                record(.problem, "Couldn't use the new scan", error.localizedDescription, item.url.path)
+            }
+        }
+    }
+
+    /// Pieces you said aren't one document, by suggestion.
+    var keepingSeparate: Set<String> { Set(UserDefaults.standard.stringArray(forKey: DefaultsKey.keepSeparate) ?? []) }
+
+    func keepSeparate(_ suggestion: JoinSuggestion, undoManager: UndoManager?) {
+        let before = keepingSeparate
+        UserDefaults.standard.set(Array(before.union([suggestion.id])), forKey: DefaultsKey.keepSeparate)
+        undoManager?.registerUndo(withTarget: self) { model in
+            MainActor.assumeIsolated {
+                UserDefaults.standard.set(Array(before), forKey: DefaultsKey.keepSeparate)
+                model.refreshTidy()
+            }
+        }
+        undoManager?.setActionName("Keep Separate")
+        joinSuggestions.removeAll { $0.id == suggestion.id }
+    }
+
+    /// Joins filed documents into the first, pages in order; the rest go to the Trash. ⌘Z separates them again.
+    func combineFiled(_ pieces: [DocumentIndex.Entry], undoManager: UndoManager?) throws {
+        guard let actions = reviewActions else { throw ReviewActions.LibraryActionError("HomeClerk isn't ready yet.") }
+        let paths = pieces.map(\.path)
+        guard beginDocumentAction(paths) else {
+            throw ReviewActions.LibraryActionError("One of them is busy with something else. Try again in a moment.")
+        }
+        defer { endDocumentAction(paths) }
+        let joined = try actions.join(pieces)
+        undoManager?.registerUndo(withTarget: self) { model in
+            MainActor.assumeIsolated {
+                model.undoStep("Combine Documents") { try model.reviewActions?.undo(joined) }
+                model.refreshTidy()
+                model.documentsChanged += 1
+            }
+        }
+        undoManager?.setActionName("Combine Documents")
+        joinSuggestions.removeAll { suggestion in suggestion.pieces.contains { paths.contains($0.path) } }
+        documentsChanged += 1
+        updateSpotlight()
+        refreshTidy()
+    }
+
     /// Documents you chose to leave as they are in Needs Details.
     var leaving: Set<String> { Set(UserDefaults.standard.stringArray(forKey: DefaultsKey.leaveAsIs) ?? []) }
 
@@ -78,6 +185,32 @@ extension HomeClerkModel {
             olderOriginals = older
         }
         duplicateItems = reviewActions?.duplicateItems() ?? []
+        // Reading printed page numbers opens PDFs, so off the main thread
+        piecesSearch?.cancel()
+        let separate = keepingSeparate
+        let search = Task.detached(priority: .utility) { Joining.suggestions(documents, keepingSeparate: separate) }
+        piecesSearch = search
+        tidyChecksRunning += 1
+        Task {
+            let found = await search.value
+            tidyChecksRunning -= 1
+            guard !search.isCancelled else { return }
+            joinSuggestions = found
+        }
+        // Compares every filed document's text (cached for Search), so off the main thread too
+        filedDuplicatesSearch?.cancel()
+        let fullText = self.fullText, keeping = keepingBoth, threshold = settings.duplicateHammingThreshold
+        let twice = Task.detached(priority: .utility) {
+            FiledDuplicates.find(documents, texts: fullText.texts(of: documents), hammingThreshold: threshold, keepingBoth: keeping)
+        }
+        filedDuplicatesSearch = twice
+        tidyChecksRunning += 1
+        Task {
+            let found = await twice.value
+            tidyChecksRunning -= 1
+            guard !twice.isCancelled else { return }
+            filedDuplicates = found
+        }
         let rules = taxonomy?.retention ?? []
         expiredDocuments = Retention.expired(library.documents, rules: rules, today: DocumentProcessor.localToday(),
                                              keeping: keeping)
@@ -188,15 +321,18 @@ extension HomeClerkModel {
 
 struct TidyScreen: View {
     let model: HomeClerkModel
-    enum Mode: String { case details, duplicates, expired, originals }
+    enum Mode: String { case details, duplicates, pieces, expired, originals }
     @AppStorage(DefaultsKey.tidyMode) private var mode = Mode.duplicates
     @Environment(\.undoManager) private var undoManager
     @State private var duplicate: String?
+    @State private var piece: String?
     @State private var expiredSelection = Set<String>()
     @State private var confirmKeepAlways = false
     @State private var detailsSelection = Set<String>()
     @State private var originalsSelection = Set<String>()
     @State private var problem: String?
+    /// A copy with fewer pages than the other, waiting for you to confirm keeping it.
+    @State private var fewerPages: (pages: Int, other: Int, keep: () -> Void)?
     @AppStorage(DefaultsKey.backupAcknowledged) private var backupAcknowledged = false
     @State private var confirmOlderCopies = false
 
@@ -204,7 +340,8 @@ struct TidyScreen: View {
         Page(title: "Tidy Up", subtitle: subtitle) {
             Picker("Show", selection: $mode) {
                 Text("Needs Details (\(model.needsDetails.count))").tag(Mode.details)
-                Text("Duplicates (\(model.duplicateItems.count))").tag(Mode.duplicates)
+                Text("Duplicates (\(model.duplicateItems.count + model.filedDuplicates.count))").tag(Mode.duplicates)
+                Text("Filed in Parts (\(model.joinSuggestions.count))").tag(Mode.pieces)
                 Text("Past Keep Period (\(model.expiredDocuments.count))").tag(Mode.expired)
                 Text("Originals (\(model.clearableOriginals.count + model.olderOriginals.count))").tag(Mode.originals)
             }
@@ -216,6 +353,7 @@ struct TidyScreen: View {
                 switch mode {
                 case .details: details
                 case .duplicates: duplicates
+                case .pieces: pieces
                 case .expired: expired
                 case .originals: originals
                 }
@@ -226,11 +364,17 @@ struct TidyScreen: View {
         }
         .onAppear {
             model.refreshTidy()
-            if duplicate == nil { duplicate = model.duplicateItems.first?.id }
-            // Open on a list with something in it
-            let counts: [(Mode, Int)] = [(.details, model.needsDetails.count), (.duplicates, model.duplicateItems.count),
-                                         (.expired, model.expiredDocuments.count)]
-            if counts.first(where: { $0.0 == mode })?.1 == 0, let busy = counts.first(where: { $0.1 > 0 }) { mode = busy.0 }
+            openOnAListWithSomethingInIt()
+        }
+        // The library checks finish after Tidy Up opens
+        .onChange(of: model.tidyChecksRunning) { _, running in if running == 0 { openOnAListWithSomethingInIt() } }
+        .confirmationDialog("Keep the copy with fewer pages?", isPresented: Binding(get: { fewerPages != nil }, set: { if !$0 { fewerPages = nil } })) {
+            Button("Keep It Anyway") { fewerPages?.keep(); fewerPages = nil }
+            Button("Cancel", role: .cancel) { fewerPages = nil }
+        } message: {
+            if let fewerPages {
+                Text("It has \(fewerPages.pages) \(fewerPages.pages == 1 ? "page" : "pages") and the other has \(fewerPages.other), so pages may be missing. The other copy goes to the Trash.")
+            }
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -242,75 +386,210 @@ struct TidyScreen: View {
         }
     }
 
+    private func openOnAListWithSomethingInIt() {
+        let counts: [(Mode, Int)] = [(.details, model.needsDetails.count), (.duplicates, model.duplicateItems.count + model.filedDuplicates.count),
+                                     (.pieces, model.joinSuggestions.count), (.expired, model.expiredDocuments.count)]
+        if counts.first(where: { $0.0 == mode })?.1 == 0, let busy = counts.first(where: { $0.1 > 0 }) { mode = busy.0 }
+    }
+
     private var subtitle: String {
         model.tidyCount == 0 ? "Nothing to tidy" : model.tidyCount == 1 ? "1 thing to look at" : "\(model.tidyCount) things to look at"
     }
 
     // MARK: Duplicates
 
+    /// Every row in Duplicates, in list order: scans set aside, then documents filed twice.
+    private var duplicateIDs: [String] { model.duplicateItems.map(\.id) + model.filedDuplicates.map(\.id) }
+
+    /// After a row goes (kept, trashed, or kept both), the one that took its place is selected —
+    /// so what's shown is always what's highlighted, and ⌘⌫ acts on what you see.
+    private func reselect(_ selection: Binding<String?>, old: [String], new: [String]) {
+        guard selection.wrappedValue.map(new.contains) != true else { return }
+        let gone = selection.wrappedValue.flatMap(old.firstIndex(of:)) ?? 0
+        selection.wrappedValue = new.isEmpty ? nil : new[min(gone, new.count - 1)]
+    }
+
+    @ViewBuilder
+    private func checking(_ empty: some View) -> some View {
+        if model.tidyChecksRunning > 0 {
+            ProgressView("Checking your library…").frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            empty
+        }
+    }
+
     @ViewBuilder
     private var duplicates: some View {
-        if model.duplicateItems.isEmpty {
-            ContentUnavailableView("No duplicates", systemImage: "doc.on.doc",
-                                   description: Text("Scans HomeClerk recognizes as already filed wait here for you to confirm."))
+        if model.duplicateItems.isEmpty && model.filedDuplicates.isEmpty {
+            checking(ContentUnavailableView("No duplicates", systemImage: "doc.on.doc",
+                                            description: Text("Scans HomeClerk recognizes as already filed, and documents it finds filed twice, wait here for you to choose which to keep.")))
         } else {
-            let item = model.duplicateItems.first { $0.id == duplicate } ?? model.duplicateItems[0]
             HStack(spacing: 0) {
-                List(model.duplicateItems, selection: $duplicate) { item in
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(item.url.lastPathComponent).lineLimit(1).truncationMode(.middle)
-                        Text("Same as \((item.originalLabel as NSString).lastPathComponent)")
-                            .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                List(selection: $duplicate) {
+                    if !model.duplicateItems.isEmpty {
+                        SwiftUI.Section("New scans already filed") {
+                            ForEach(model.duplicateItems) { item in
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(item.url.lastPathComponent).lineLimit(1).truncationMode(.middle)
+                                    Text("Same as \((item.originalLabel as NSString).lastPathComponent)")
+                                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                                }
+                                .padding(.vertical, 2)
+                                .accessibilityElement(children: .combine)
+                                .tag(item.id)
+                            }
+                        }
                     }
-                    .padding(.vertical, 2)
-                    .accessibilityElement(children: .combine)
-                    .tag(item.id)
+                    if !model.filedDuplicates.isEmpty {
+                        SwiftUI.Section("Filed twice") {
+                            ForEach(model.filedDuplicates) { pair in
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text((pair.keep.path as NSString).lastPathComponent).lineLimit(1).truncationMode(.middle)
+                                    Text(pair.partial ? "Also filed in part" : "Also filed again")
+                                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                                }
+                                .padding(.vertical, 2)
+                                .accessibilityElement(children: .combine)
+                                .tag(pair.id)
+                            }
+                        }
+                    }
                 }
                 .listStyle(.inset)
                 .frame(width: 240)
 
                 Divider()
 
-                VStack(spacing: 0) {
-                    // The two side by side, as you'd compare them on a desk
-                    HStack(spacing: 1) {
-                        labeled("This scan", PDFPreview(url: item.url))
-                        if let original = item.original {
-                            labeled("Already filed: \((item.originalLabel as NSString).deletingLastPathComponent)", PDFPreview(url: original))
-                        } else {
-                            ContentUnavailableView("The filed copy has moved", systemImage: "questionmark.folder",
-                                                   description: Text(item.originalLabel))
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        }
-                    }
-                    Divider()
-                    HStack {
-                        Text(item.why.isEmpty ? "" : "Why: \(item.why)").font(.callout).foregroundStyle(.secondary)
-                        if let problem { Text(problem).font(.callout).foregroundStyle(.red) }
-                        Spacer()
-                        Button("Not a Duplicate") { notADuplicate(item) }
-                            .help("Moves it to Review to file as its own document")
-                        Button("Move to Trash") {
-                            // Its notes go too, so ⌘Z brings back the whole thing
-                            let notes = [ReviewProposal.reasonURL(for: item.url), ReviewProposal.proposalURL(for: item.url)]
-                                .filter { FileManager.default.fileExists(atPath: $0.path) }
-                            model.moveToTrash([item.url] + notes, undoManager: undoManager)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .keyboardShortcut(.delete, modifiers: .command)
-                    }
-                    .padding(.horizontal, Layout.margin)
-                    .padding(.vertical, 10)
+                if let pair = model.filedDuplicates.first(where: { $0.id == duplicate }) {
+                    filedTwice(pair)
+                } else if let item = model.duplicateItems.first(where: { $0.id == duplicate }) {
+                    setAside(item)
+                } else {
+                    ContentUnavailableView("Choose one on the left", systemImage: "doc.on.doc")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
+            .onChange(of: duplicateIDs) { old, new in reselect($duplicate, old: old, new: new) }
+            .onAppear { reselect($duplicate, old: [], new: duplicateIDs) }
         }
     }
 
-    private func labeled(_ title: String, _ preview: PDFPreview) -> some View {
+    /// A new scan set aside as already filed, beside the filed copy.
+    private func setAside(_ item: DuplicateItem) -> some View {
         VStack(spacing: 0) {
-            Text(title).font(.caption.weight(.semibold)).foregroundStyle(.secondary).lineLimit(1)
-                .padding(.vertical, 6)
-            preview
+            // The two side by side, as you'd compare them on a desk
+            HStack(spacing: 1) {
+                copy("New scan", url: item.url) {
+                    Button("Keep This One") { keep(fewerPages: item.url, than: item.original) { model.keepScanInstead(item, undoManager: undoManager) } }
+                        .disabled(item.original == nil || item.wholePile)
+                        .help(item.wholePile ? "This scan holds several documents, so it can't take one document's place"
+                                             : "Puts this scan in place of the filed copy — same name, folder, and details — and moves the filed copy to the Trash")
+                        .accessibilityLabel("Keep the new scan")
+                }
+                if let original = item.original {
+                    copy("Filed copy", url: original) {
+                        Button("Keep This One") { keep(fewerPages: original, than: item.url) { trashScan(item) } }
+                            .buttonStyle(.borderedProminent)
+                            .keyboardShortcut(.delete, modifiers: .command)
+                            .help("Moves the new scan to the Trash")
+                            .accessibilityLabel("Keep the filed copy")
+                    }
+                } else {
+                    ContentUnavailableView("The filed copy has moved", systemImage: "questionmark.folder",
+                                           description: Text(item.originalLabel))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+            Divider()
+            HStack {
+                Text(item.wholePile ? "Every document in this scan is already filed." : "Keep the clearer, more complete one; the other goes to the Trash.")
+                    .font(.callout).foregroundStyle(.secondary)
+                problemText
+                Spacer()
+                Button("Not a Duplicate") { notADuplicate(item) }
+                    .help("Moves it to Review to file as its own document")
+            }
+            .padding(.horizontal, Layout.margin)
+            .padding(.vertical, 10)
+        }
+    }
+
+    private func trashScan(_ item: DuplicateItem) {
+        // Its notes go too, so ⌘Z brings back the whole thing
+        let notes = [ReviewProposal.reasonURL(for: item.url), ReviewProposal.proposalURL(for: item.url)]
+            .filter { FileManager.default.fileExists(atPath: $0.path) }
+        model.moveToTrash([item.url] + notes, undoManager: undoManager)
+    }
+
+    /// Two filed copies of one paper, the more complete one first.
+    private func filedTwice(_ pair: FiledDuplicate) -> some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 1) {
+                copy("More complete", url: URL(fileURLWithPath: pair.keep.path)) {
+                    Button("Keep This One") { model.keepFiledCopy(pair.keep, removing: pair.extra, undoManager: undoManager) }
+                        .buttonStyle(.borderedProminent)
+                        .keyboardShortcut(.delete, modifiers: .command)
+                        .accessibilityLabel("Keep the more complete copy")
+                }
+                copy(pair.partial ? "Has only some of the pages" : "Other copy", url: URL(fileURLWithPath: pair.extra.path)) {
+                    Button("Keep This One") {
+                        keep(fewerPages: URL(fileURLWithPath: pair.extra.path), than: URL(fileURLWithPath: pair.keep.path)) {
+                            model.keepFiledCopy(pair.extra, removing: pair.keep, undoManager: undoManager)
+                        }
+                    }
+                    .accessibilityLabel("Keep the other copy")
+                }
+            }
+            Divider()
+            HStack {
+                Text("Keep the clearer, more complete one; the other goes to the Trash.")
+                    .font(.callout).foregroundStyle(.secondary)
+                problemText
+                Spacer()
+                Button("Keep Both") { model.keepBoth(pair, undoManager: undoManager) }
+                    .help("They're different documents; HomeClerk won't list these again")
+            }
+            .padding(.horizontal, Layout.margin)
+            .padding(.vertical, 10)
+        }
+    }
+
+    @ViewBuilder
+    private var problemText: some View {
+        if let problem = problem ?? model.tidyProblem { Text(problem).font(.callout).foregroundStyle(.red).lineLimit(2) }
+    }
+
+    /// Keeps a copy — after asking, when it has fewer pages than the other, since that usually
+    /// means pages are missing.
+    private func keep(fewerPages kept: URL, than other: URL?, _ action: @escaping () -> Void) {
+        problem = nil
+        model.tidyProblem = nil
+        let pages = PDFDocument(url: kept)?.pageCount ?? 0, otherPages = other.flatMap { PDFDocument(url: $0)?.pageCount } ?? 0
+        guard pages < otherPages else { return action() }
+        fewerPages = (pages, otherPages, action)
+    }
+
+    /// "3 pages · 412 KB"
+    nonisolated fileprivate static func size(of url: URL) -> String {
+        let pages = PDFDocument(url: url)?.pageCount ?? 0
+        let bytes = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+        return "\(pages) \(pages == 1 ? "page" : "pages") · \(ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file))"
+    }
+
+    /// One copy to choose: what it is, its pages and size, where it's filed, the page itself, and
+    /// what you can do with it.
+    private func copy<Actions: View>(_ title: String, url: URL, @ViewBuilder actions: () -> Actions) -> some View {
+        VStack(spacing: 0) {
+            VStack(spacing: 1) {
+                Text(title).font(.caption.weight(.semibold))
+                CopyFacts(url: url)
+                Text(url.lastPathComponent).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                    .help(url.deletingLastPathComponent().lastPathComponent + "/" + url.lastPathComponent)
+            }
+            .padding(.vertical, 6)
+            .padding(.horizontal, 8)
+            PDFPreview(url: url)
+            actions().padding(.vertical, 6)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -323,6 +602,71 @@ struct TidyScreen: View {
             problem = nil
         } catch {
             problem = "Couldn't move it: \(error.localizedDescription)"
+        }
+    }
+
+    // MARK: Documents filed in parts
+
+    private var pieceIDs: [String] { model.joinSuggestions.map(\.id) }
+
+    @ViewBuilder
+    private var pieces: some View {
+        if model.joinSuggestions.isEmpty {
+            checking(ContentUnavailableView("Nothing filed in parts", systemImage: "doc.on.doc",
+                                            description: Text("A document filed in parts — its first pages from one scan, the rest from another — shows up here to put back together.")))
+        } else {
+            HStack(spacing: 0) {
+                List(model.joinSuggestions, selection: $piece) { suggestion in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text((suggestion.pieces[0].path as NSString).lastPathComponent).lineLimit(1).truncationMode(.middle)
+                        Text("A \(suggestion.pageCount)-page document filed in \(suggestion.pieces.count) parts")
+                            .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    }
+                    .padding(.vertical, 2)
+                    .accessibilityElement(children: .combine)
+                    .tag(suggestion.id)
+                }
+                .listStyle(.inset)
+                .frame(width: 240)
+
+                Divider()
+
+                if let suggestion = model.joinSuggestions.first(where: { $0.id == piece }) {
+                    VStack(spacing: 0) {
+                        HStack(spacing: 1) {
+                            ForEach(Array(suggestion.pieces.enumerated()), id: \.element.path) { number, entry in
+                                copy(number == 0 ? "First part" : "Then", url: URL(fileURLWithPath: entry.path)) { EmptyView() }
+                            }
+                        }
+                        Divider()
+                        HStack {
+                            Text("Combined, it keeps the first part's name, folder, and details; the other part goes to the Trash.")
+                                .font(.callout).foregroundStyle(.secondary)
+                            problemText
+                            Spacer()
+                            Button("Keep Separate") { model.keepSeparate(suggestion, undoManager: undoManager) }
+                                .help("They aren't one document; HomeClerk won't suggest these again")
+                            Button("Combine") {
+                                do {
+                                    try model.combineFiled(suggestion.pieces, undoManager: undoManager)
+                                    problem = nil
+                                } catch {
+                                    problem = "Couldn't combine them: \(error.localizedDescription)"
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .keyboardShortcut(.return, modifiers: .command)
+                        }
+                        .padding(.horizontal, Layout.margin)
+                        .padding(.vertical, 10)
+                    }
+                } else {
+                    ContentUnavailableView("Choose one on the left", systemImage: "doc.on.doc")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+            .onChange(of: pieceIDs) { old, new in reselect($piece, old: old, new: new) }
+            .onAppear { reselect($piece, old: [], new: pieceIDs) }
         }
     }
 
@@ -794,5 +1138,19 @@ private struct BackupBanner: View {
         .padding(.horizontal, Layout.margin).padding(.vertical, 10)
         .background(.orange.opacity(0.08))
         .overlay(alignment: .bottom) { Divider() }
+    }
+}
+
+/// A copy's page count and file size ("3 pages · 412 KB"), read off the main thread.
+private struct CopyFacts: View {
+    let url: URL
+    @State private var facts = " "
+
+    var body: some View {
+        Text(facts).font(.caption).foregroundStyle(.secondary).monospacedDigit()
+            .task(id: url) {
+                let url = url
+                facts = await Task.detached(priority: .userInitiated) { TidyScreen.size(of: url) }.value
+            }
     }
 }

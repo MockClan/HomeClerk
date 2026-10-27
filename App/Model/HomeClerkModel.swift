@@ -164,7 +164,19 @@ final class HomeClerkModel {
     /// Copies from before HomeClerk kept filing records: cleared only after you confirm.
     var olderOriginals: [ClearableOriginal] = []
     @ObservationIgnored var originalsVerification: Task<([ClearableOriginal], [ClearableOriginal]), Never>?
-    var tidyCount: Int { duplicateItems.count + expiredDocuments.count + needsDetails.count }
+    /// Filed documents that look like pieces of one, for Tidy Up ▸ Pieces.
+    var joinSuggestions: [JoinSuggestion] = []
+    @ObservationIgnored var piecesSearch: Task<[JoinSuggestion], Never>?
+    /// The same paper filed twice, for Tidy Up ▸ Duplicates.
+    var filedDuplicates: [FiledDuplicate] = []
+    /// Background checks of the whole library (documents filed twice, or in parts) still running.
+    var tidyChecksRunning = 0
+    /// Why the last Tidy Up action on duplicates or parts didn't happen, shown where it was tried.
+    var tidyProblem: String?
+    @ObservationIgnored var filedDuplicatesSearch: Task<[FiledDuplicate], Never>?
+    var tidyCount: Int {
+        duplicateItems.count + filedDuplicates.count + expiredDocuments.count + needsDetails.count + joinSuggestions.count
+    }
     /// Set with `focusedDocument` to open that document in Filed ready to edit.
     var editWhenFocused = false
     /// Sheets the menus open.

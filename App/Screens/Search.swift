@@ -35,6 +35,7 @@ struct SearchScreen: View {
     @State private var saved = SavedSearch.all()
     @State private var naming = false
     @State private var newName = ""
+    @Environment(\.undoManager) private var undoManager
 
     private var searching: Bool { !query.trimmingCharacters(in: .whitespaces).isEmpty || !filter.isEmpty }
 
@@ -76,7 +77,12 @@ struct SearchScreen: View {
                     }
                 }
                 .columnsFitWithoutScrolling()
-                .contextMenu(forSelectionType: DocumentIndex.Entry.ID.self) { _ in } primaryAction: { ids in
+                .contextMenu(forSelectionType: DocumentIndex.Entry.ID.self) { ids in
+                    if ids.count > 1 {
+                        Button("Combine into One Document") { combine(ids) }
+                            .help("For one document filed in parts: joins their pages in page order, keeping the name, folder, and details of the part whose pages come first; the others go to the Trash")
+                    }
+                } primaryAction: { ids in
                     for path in ids.prefix(10) { NSWorkspace.shared.open(URL(fileURLWithPath: path)) }
                 }
                 .quickLookOnSpace(selected: selection.first.map { URL(fileURLWithPath: $0) },
@@ -151,6 +157,19 @@ extension SearchScreen {
         filter = DocumentLibrary.Filter()
         query = request
         search()
+    }
+
+    /// Joins the chosen documents into one, in page order; ⌘Z separates them again.
+    private func combine(_ ids: Set<DocumentIndex.Entry.ID>) {
+        let pieces = Joining.ordered(model.library.documents.filter { ids.contains($0.path) })
+        guard pieces.count > 1 else { return }
+        do {
+            try model.combineFiled(pieces, undoManager: undoManager)
+            selection = [pieces[0].path]
+            search()
+        } catch {
+            model.record(.problem, "Couldn't combine them", error.localizedDescription, nil)
+        }
     }
 
     private func search() {
