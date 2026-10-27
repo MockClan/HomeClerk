@@ -26,6 +26,11 @@ public enum DocumentBoundaries {
         or about a different matter. A page does not begin a new document when it continues the one \
         before: the next page of a statement, bill, or letter ("Page 2 of 3"), a form's continuation, \
         an enclosure the letter mentions, or the receipt for paying the invoice on the page before. \
+        A page with no sender, name, or date of its own — a form, checklist, inspection sheet, or \
+        worksheet — goes with the document before it when it's about the same visit or matter. \
+        A document ends at its printed last page ("Page 4 of 4"); a page after it with no letterhead \
+        of its own, such as a handwritten note, begins a new document unless it's plainly that \
+        document's back page. \
         Page 1 always begins a document. Answer with every page that begins one.
         """
 
@@ -95,17 +100,34 @@ public enum DocumentBoundaries {
 /// own. A scan of one page is read as is.
 public struct BoundaryFindingAnalyzer: FacetAnalyzer {
     public let reader: any BoundaryFinding
+    /// Below every confidence threshold, so a scan whose documents couldn't be told apart waits in Review.
+    static let unsplitConfidence = 0.4
 
     public init(_ reader: any BoundaryFinding) { self.reader = reader }
+
+    /// The whole scan read as one document when where documents start couldn't be found. It may
+    /// be a pile, so it waits in Review — where it can be split — instead of being filed as one.
+    private func unsplit(ocrText: String, pageCount: Int, pdf: URL) async -> FacetAnalysis {
+        var analysis = await reader.analyze(ocrText: ocrText, pageCount: pageCount, pdf: pdf)
+        guard analysis.error == nil else { return analysis }
+        for i in analysis.documents.indices {
+            analysis.documents[i].confidence = min(analysis.documents[i].confidence, Self.unsplitConfidence)
+        }
+        analysis.summary = "Couldn't tell where documents start in these \(pageCount) pages; if there are several, split them.\n"
+            + analysis.summary
+        return analysis
+    }
 
     public var modelName: String { reader.modelName }
     public var isPaid: Bool { reader.isPaid }
 
     public func analyze(ocrText: String, pageCount: Int, pdf: URL) async -> FacetAnalysis {
         let pages = TextRecognizer.pages(of: ocrText)
-        guard pageCount > 1, pages.count == pageCount,
-              let found = await DocumentBoundaries.starts(pages, reader: reader) else {
+        guard pageCount > 1, pages.count == pageCount else {
             return await reader.analyze(ocrText: ocrText, pageCount: pageCount, pdf: pdf)
+        }
+        guard let found = await DocumentBoundaries.starts(pages, reader: reader) else {
+            return await unsplit(ocrText: ocrText, pageCount: pageCount, pdf: pdf)
         }
         let ranges = DocumentBoundaries.ranges(starts: DocumentBoundaries.corrected(found, pages: pages), pageCount: pageCount)
         guard ranges.count > 1 else { return Self.oneDocument(await reader.analyze(ocrText: ocrText, pageCount: pageCount, pdf: pdf),
@@ -119,7 +141,7 @@ public struct BoundaryFindingAnalyzer: FacetAnalyzer {
             if Task.isCancelled { return .failed("Cancelled") }
             let part: URL
             do { part = try Self.write(pdf, pages: range, in: folder) } catch {
-                return await reader.analyze(ocrText: ocrText, pageCount: pageCount, pdf: pdf)
+                return await unsplit(ocrText: ocrText, pageCount: pageCount, pdf: pdf)
             }
             let text = TextRecognizer.joined(Array(pages[(range.lowerBound - 1)...(range.upperBound - 1)]))
             let analysis = Self.oneDocument(await reader.analyze(ocrText: text, pageCount: range.count, pdf: part), pages: range)
@@ -147,16 +169,8 @@ public struct BoundaryFindingAnalyzer: FacetAnalyzer {
     }
 
     static func write(_ pdf: URL, pages: ClosedRange<Int>, in folder: URL) throws -> URL {
-        guard let source = PDFDocument(url: pdf) else { throw PDFTools.Failure("The scan couldn't be opened.") }
-        let part = PDFDocument()
-        for number in pages {
-            guard let page = source.page(at: number - 1)?.copy() as? PDFPage else { throw PDFTools.Failure("Page \(number) is missing.") }
-            part.insert(page, at: part.pageCount)
-        }
-        guard let data = part.dataRepresentation() else { throw PDFTools.Failure("A part couldn't be saved.") }
-        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let url = folder.appendingPathComponent("pages-\(pages.lowerBound)-\(pages.upperBound).pdf")
-        try PrivateFile.write(data, to: url)
+        try PDFTools.split(pdf, pages: pages, to: url)
         return url
     }
 

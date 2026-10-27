@@ -2,8 +2,14 @@ import Foundation
 
 /// Documents a reader split apart that belong together.
 enum RelatedDocuments {
-    /// A bill followed directly by the receipt for paying it — same vendor, same amount — is one
-    /// document: the receipt, so the bill doesn't also show as unpaid in Upcoming.
+    /// Joins parts that belong together:
+    /// - a bill followed directly by the receipt for paying it (same vendor, same amount) is one
+    ///   document — the receipt, so the bill doesn't also show as unpaid in Upcoming;
+    /// - a part with no amount of its own, right after a document from the same vendor (or naming
+    ///   none) and about the same person, is part of it — with that document's details and
+    ///   confidence — when it has no date, or has the same date but is a different kind of document:
+    ///   a shop's inspection checklist after its invoice. Copies of the same kind of form (each
+    ///   participant's course evaluation, two prescriptions) stay separate.
     static func merged(_ analysis: FacetAnalysis) -> FacetAnalysis {
         guard analysis.error == nil, analysis.documents.count > 1 else { return analysis }
         var documents: [FacetDocument] = []
@@ -12,6 +18,8 @@ enum RelatedDocuments {
                 documents[documents.count - 1] = FacetDocument(firstPage: bill.firstPage, lastPage: document.lastPage,
                                                                facets: document.facets,
                                                                confidence: min(bill.confidence, document.confidence))
+            } else if let main = documents.last, attached(document, to: main) {
+                documents[documents.count - 1].lastPage = document.lastPage
             } else {
                 documents.append(document)
             }
@@ -19,6 +27,15 @@ enum RelatedDocuments {
         var result = analysis
         result.documents = documents
         return result
+    }
+
+    static func attached(_ part: FacetDocument, to main: FacetDocument) -> Bool {
+        let p = part.facets, m = main.facets
+        let undatedOrSameVisit = p.documentDate.isEmpty
+            || (p.documentDate == m.documentDate && !TextRules.equalsIgnoringCase(p.documentType, m.documentType))
+        return part.firstPage == main.lastPage + 1 && p.amount == nil && undatedOrSameVisit
+            && (p.vendor.isEmpty || TextRules.key(p.vendor) == TextRules.key(m.vendor))
+            && (p.person.isEmpty || TextRules.key(p.person) == TextRules.key(m.person))
     }
 
     static func paid(_ bill: FacetDocument, by receipt: FacetDocument) -> Bool {

@@ -95,13 +95,16 @@ final class ScriptedBoundaryReader: BoundaryFinding, @unchecked Sendable {
         #expect(analysis.documents.first?.confidence == 0.8)
     }
 
-    @Test func aReaderThatCantAnswerReadsTheWholeScan() async throws {
+    @Test func aReaderThatCantAnswerSendsTheWholeScanToReview() async throws {
         let pages = ["ACME POWER", "CORNER HARDWARE"]
         let reader = ScriptedBoundaryReader { _ in nil }
         let analysis = await BoundaryFindingAnalyzer(reader).analyze(ocrText: TextRecognizer.joined(pages), pageCount: 2,
                                                                        pdf: try scan(pages))
         #expect(reader.read == [2])
         #expect(analysis.documents.count == 1)
+        // It may be a pile, so it isn't filed as one document: it waits in Review, to be split there
+        #expect(analysis.documents[0].confidence < HomeClerkSettings(values: [:]).minConfidenceThreshold)
+        #expect(analysis.summary.hasPrefix("Couldn't tell where documents start"))
     }
 
     @Test func onlyAppleFindsBoundariesFirst() {
@@ -115,8 +118,9 @@ final class ScriptedBoundaryReader: BoundaryFinding, @unchecked Sendable {
 
     @Test func aBillFollowedByTheReceiptForPayingItIsOneDocument() {
         func doc(_ first: Int, _ last: Int, _ type: String, _ vendor: String, _ amount: Decimal?) -> FacetDocument {
-            FacetDocument(firstPage: first, lastPage: last,
-                          facets: DocumentFacets(documentType: type, area: "Devices", vendor: vendor, amount: amount), confidence: 0.9)
+            // Dated, so only the bill-and-receipt rule is in play (an undated part from the same vendor joins anyway)
+            FacetDocument(firstPage: first, lastPage: last, facets: DocumentFacets(documentType: type, area: "Devices",
+                          vendor: vendor, documentDate: "2026-03-0\(first)", amount: amount), confidence: 0.9)
         }
         let paid = RelatedDocuments.merged(FacetAnalysis(documents: [
             doc(1, 1, "Bill", "Northwind_Electronics", 219.99), doc(2, 2, "Receipt", "Northwind Electronics", 219.99),
@@ -131,6 +135,39 @@ final class ScriptedBoundaryReader: BoundaryFinding, @unchecked Sendable {
                           [doc(1, 1, "Bill", "Acme", 52.18), doc(3, 3, "Receipt", "Acme", 52.18)],
                           [doc(1, 1, "Bill", "Acme", nil), doc(2, 2, "Receipt", "Acme", nil)]] {
             #expect(RelatedDocuments.merged(FacetAnalysis(documents: documents)).documents.count == 2)
+        }
+    }
+
+    @Test func undatedPaperworkFromTheSameVisitJoinsTheDocumentBeforeIt() {
+        func doc(_ first: Int, _ last: Int, type: String = "Receipt", vendor: String, date: String = "",
+                 amount: Decimal? = nil, person: String = "", _ confidence: Double = 0.9) -> FacetDocument {
+            FacetDocument(firstPage: first, lastPage: last, facets: DocumentFacets(documentType: type, area: "Vehicle",
+                          vendor: vendor, documentDate: date, amount: amount, person: person), confidence: confidence)
+        }
+        let invoice = doc(1, 2, vendor: "Example_Tire", date: "2026-03-02", amount: 99.36)
+        // The shop's checklist: same vendor, no date, no amount, and the reader wasn't sure
+        let joined = RelatedDocuments.merged(FacetAnalysis(documents: [
+            invoice, doc(3, 4, vendor: "Example Tire", 0.6), doc(5, 5, vendor: "Cedar_Health", date: "2026-05-28")]))
+        #expect(joined.documents.map { $0.firstPage...$0.lastPage } == [1...4, 5...5])
+        #expect(joined.documents[0].confidence == 0.9 && joined.documents[0].facets.amount == 99.36)
+        // Naming no vendor at all also joins
+        #expect(RelatedDocuments.merged(FacetAnalysis(documents: [invoice, doc(3, 3, vendor: "")])).documents.count == 1)
+        // The visit's date filled in on the checklist: a different kind of document on the same day joins
+        #expect(RelatedDocuments.merged(FacetAnalysis(documents: [
+            invoice, doc(3, 3, type: "Record", vendor: "Example_Tire", date: "2026-03-02")])).documents.count == 1)
+        // Copies of one kind of form on one day (each participant's evaluation) stay separate,
+        // and so does a part about someone else
+        let evaluation = doc(1, 2, type: "Form", vendor: "Example_Council", date: "2026-06-09")
+        #expect(RelatedDocuments.merged(FacetAnalysis(documents: [
+            evaluation, doc(3, 4, type: "Form", vendor: "Example_Council", date: "2026-06-09")])).documents.count == 2)
+        #expect(RelatedDocuments.merged(FacetAnalysis(documents: [
+            doc(1, 1, type: "Record", vendor: "Example_Clinic", date: "2026-06-09", person: "Pat_Example"),
+            doc(2, 2, type: "Form", vendor: "Example_Clinic", date: "2026-06-09", person: "Sam_Example")])).documents.count == 2)
+
+        // Its own date, its own amount, or another vendor: a document of its own
+        for part in [doc(3, 3, vendor: "Example_Tire", date: "2026-04-02"), doc(3, 3, vendor: "Example_Tire", amount: 12),
+                     doc(3, 3, vendor: "Other_Shop")] {
+            #expect(RelatedDocuments.merged(FacetAnalysis(documents: [invoice, part])).documents.count == 2)
         }
     }
 }

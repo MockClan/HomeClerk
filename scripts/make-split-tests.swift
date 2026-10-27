@@ -58,13 +58,13 @@ struct Doc {
 let docs: [String: Doc] = [
     "water_bill": Doc(pages: [[
         t("LAKESIDE WATER", 44), t("Municipal Water & Sewer Service", 22), .gap,
-        t("STATEMENT DATE: May 14, 2026"), t("ACCOUNT: 40-7731-2"), t("SERVICE ADDRESS: 18 Example Lane"), .gap,
+        t("STATEMENT DATE: May 21, 2026"), t("ACCOUNT: 40-7731-2"), t("SERVICE ADDRESS: 18 Example Lane"), .gap,
         t("Service period  Apr 10 – May 9, 2026", 24), .gap,
         row("Water usage (4,200 gal)", "$31.20"), row("Sewer", "$16.48"), row("Base charge", "$4.50"), .gap,
         t("AMOUNT DUE  $52.18", 34), t("PAYMENT DUE BY  June 3, 2026", 30), .gap,
         t("Thank you for conserving water.", 22),
     ]], expected: ["document_type": "Bill", "area": "Utilities", "vendor": "Lakeside Water",
-                   "document_date": "2026-05-14", "amount": 52.18]),
+                   "document_date": "2026-05-21", "amount": 52.18]),
 
     "vet_receipt": Doc(pages: [[
         t("MAPLE STREET VETERINARY", 42), t("Companion Animal Hospital", 22), .gap,
@@ -102,12 +102,12 @@ let docs: [String: Doc] = [
 
     "auto_repair": Doc(pages: [[
         t("PINE VALLEY AUTO SERVICE", 40), t("Repair Order #RO-58213"), .gap,
-        t("Date: January 19, 2026"), t("Vehicle: 2017 Example Wagon   Mileage: 84,310", 24), .gap,
+        t("Date: January 24, 2026"), t("Vehicle: 2017 Example Wagon   Mileage: 84,310", 24), .gap,
         row("Front brake pads and rotors", "$248.00"), row("Brake fluid flush", "$49.95"), row("Shop supplies", "$14.80"), .gap,
         t("TOTAL  $312.75", 32), t("PAID IN FULL - Visa"), .gap,
         t("Warranty: 12 months / 12,000 miles on parts and labor.", 22),
     ]], expected: ["document_type": "Receipt", "area": "Vehicle", "vendor": "Pine Valley Auto Service",
-                   "document_date": "2026-01-19", "amount": 312.75]),
+                   "document_date": "2026-01-24", "amount": 312.75]),
 
     // Related: an invoice and the receipt for paying it. One document.
     "invoice_and_receipt": Doc(pages: [[
@@ -137,13 +137,64 @@ let docs: [String: Doc] = [
         t("Parent/guardian signature: ____________________"), t("Emergency phone: __________________"),
     ]], expected: ["area": "Education", "vendor": "Riverside School District"]),
 
+    // Related: a repair invoice, then the shop's inspection checklist from the same visit, which
+    // carries no name, date, or vehicle of its own. One document.
+    "service_with_checklist": Doc(pages: [[
+        t("BRIGHTWAY TIRE & SERVICE", 40), t("Invoice #77-30418"), .gap,
+        t("Customer: Pat Example"), t("Vehicle: 2015 Example Hatchback   Miles: 96,204", 24),
+        t("Invoice date: 08/21/2026"), .gap,
+        row("Synthetic oil change", "$64.95"), row("Tire rotation", "$0.00"), row("Cabin air filter", "$29.50"), .gap,
+        t("Page 1 of 2", 20),
+    ], [
+        t("BRIGHTWAY TIRE & SERVICE", 40), t("Invoice #77-30418 - Payment"), .gap,
+        row("Subtotal", "$94.45"), row("Tax", "$4.91"), row("Total", "$99.36"), .gap,
+        t("PAID - card ending 0042"), t("Customer signature: ____________________"), .gap,
+        t("Page 2 of 2", 20),
+    ], [
+        t("MULTI-POINT INSPECTION", 36), t("Green = OK   Yellow = Soon   Red = Now", 22), .gap,
+        row("Brake pads - front", "[ ]G [ ]Y [ ]R"), row("Brake pads - rear", "[ ]G [ ]Y [ ]R"),
+        row("Tire tread depth", "____ /32"), row("Wipers", "[ ]G [ ]Y [ ]R"), row("Battery test", "[ ]G [ ]Y [ ]R"),
+        row("Belts and hoses", "[ ]G [ ]Y [ ]R"), .gap,
+        t("Technician notes: ______________________________"), t("Inspected by: ______________"),
+    ]], expected: ["document_type": "Receipt", "area": "Vehicle", "vendor": "Brightway Tire & Service",
+                   "document_date": "2026-08-21", "amount": 99.36]),
+
+    // Related: a receipt, then the shop's inspection form with the visit's date filled in. One document.
+    "service_with_dated_form": Doc(pages: [[
+        t("RIDGELINE QUICK LUBE", 40), t("Receipt #Q-55190"), .gap,
+        t("Customer: Pat Example"), t("Date: 03/12/2026"), .gap,
+        row("Full synthetic oil change", "$79.99"), row("Wiper blades", "$32.00"), row("Tax", "$5.82"), .gap,
+        t("TOTAL PAID  $117.81", 32), t("Visa ending 0042"),
+    ], [
+        t("VEHICLE INSPECTION REPORT", 36), t("Date: 03/12/2026", 24), .gap,
+        row("Brakes", "[x]OK  [ ]Soon  [ ]Now"), row("Tires", "[x]OK  [ ]Soon  [ ]Now"),
+        row("Fluids", "[ ]OK  [x]Soon  [ ]Now"), row("Lights", "[x]OK  [ ]Soon  [ ]Now"), .gap,
+        t("Technician: ____________"),
+    ]], expected: ["document_type": "Receipt", "area": "Vehicle", "vendor": "Ridgeline Quick Lube",
+                   "document_date": "2026-03-12", "amount": 117.81]),
+
+    // A program that ends at its printed last page, then an unrelated handwritten-style note
+    "exercise_program": Doc(pages: [[
+        t("Willow Creek Physical Therapy", 34), t("Home Exercise Program for Pat Example"), t("Date: 02/18/2026"), .gap,
+        t("1. Bridges - 3 sets of 10", 24), t("2. Clamshells - 3 sets of 12", 24), t("3. Wall sits - hold 30 seconds", 24), .gap,
+        t("Page 1 of 2", 20),
+    ], [
+        t("Willow Creek Physical Therapy", 34), t("Home Exercise Program (continued)"), .gap,
+        t("4. Calf raises - 3 sets of 15", 24), t("5. Hamstring stretch - hold 30 seconds", 24), .gap,
+        t("Page 2 of 2", 20),
+    ]], expected: ["area": "Medical", "vendor": "Willow Creek Physical Therapy"]),
+    "handwritten_note": Doc(pages: [[
+        t("badges to finish -", 30), .gap, t("first aid - need requirement 4", 26), t("camping - 3 more nights", 26),
+        t("cooking - plan menu", 26), .gap, t("ask about summer camp sign up", 26),
+    ]], expected: [:]),
+
     "eob": Doc(pages: [[
         t("CEDAR HEALTH PLAN", 40), t("EXPLANATION OF BENEFITS - THIS IS NOT A BILL", 24), .gap,
-        t("Statement date: February 27, 2026"), t("Member: Pat Example   ID: CHP-0093312", 24), .gap,
+        t("Statement date: March 2, 2026"), t("Member: Pat Example   ID: CHP-0093312", 24), .gap,
         t("Claim: Office visit, Dr. L. Moreno, 02/03/2026", 24),
         row("Amount billed", "$185.00"), row("Plan discount", "$62.00"), row("Plan paid", "$93.00"), row("You may owe", "$30.00"),
     ]], expected: ["document_type": "Explanation of Benefits", "area": "Medical", "vendor": "Cedar Health Plan",
-                   "document_date": "2026-02-27"]),
+                   "document_date": "2026-03-02"]),
 ]
 
 // The scans: which documents, in order, and why
@@ -155,6 +206,12 @@ let cases: [(id: String, docs: [String], why: String)] = [
     ("split-pile", ["water_bill", "bank_statement", "invoice_and_receipt", "insurance_renewal", "vet_receipt",
                     "school_letter", "auto_repair", "eob"], "Eight documents, eleven pages, scanned as one pile."),
     ("split-single-statement", ["bank_statement"], "One two-page statement: must not be split."),
+    ("split-service-with-checklist", ["service_with_checklist", "eob"],
+     "A repair invoice and the shop's unlabeled inspection checklist (one document), then an EOB."),
+    ("split-service-with-dated-form", ["service_with_dated_form"],
+     "A receipt and the shop's inspection form with the visit's date: one document."),
+    ("split-note-after-last-page", ["exercise_program", "handwritten_note"],
+     "A two-page program ending 'Page 2 of 2', then an unrelated handwritten note: two documents."),
 ]
 
 /// Writes `images` as a PDF of letter-size pages.

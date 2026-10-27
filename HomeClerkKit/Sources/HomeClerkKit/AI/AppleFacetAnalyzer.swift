@@ -74,7 +74,10 @@ public struct AppleFacetAnalyzer: FacetAnalyzer {
                 : ocrText
             switch await generate(prompt: FacetPrompt.buildUserText(ocrText: text, pageCount: pageCount), images: attempt.images) {
             case let .success(json):
-                var analysis = FacetSchema.parse(json, pageCount: pageCount, modelName: modelName, profile: profile)
+                // Apple's page numbers are unreliable; where documents start is found separately
+                // (BoundaryFindingAnalyzer), so whatever it read is one document
+                var analysis = FacetSchema.parse(json, pageCount: pageCount, modelName: modelName, profile: profile,
+                                                 wholeScan: true)
                 analysis.summary = "[\(attempt.label)] \(analysis.summary)"
                 return analysis
             case let .failure(failure):

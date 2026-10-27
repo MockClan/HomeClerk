@@ -81,7 +81,13 @@ public enum FacetPrompt {
         single document returns one entry covering every page. A new document usually starts with its
         own letterhead, title, or date. Pages about the same transaction or matter are one document:
         multi-page statements ("Page 2 of 3"), forms with continuation pages, letters with their
-        enclosures, and an invoice with the receipt for paying it.
+        enclosures, and an invoice with the receipt for paying it. A page with no sender, name, or
+        date of its own — a blank or filled-in form, checklist, inspection sheet, or worksheet —
+        belongs with the document before it when it's about the same visit or matter (a shop's
+        inspection checklist after its repair invoice, an intake form after a visit summary). A
+        document ends at its printed last page ("Page 4 of 4"): a page after it with no letterhead
+        of its own — a handwritten note, say — is a document of its own, unless it's plainly that
+        document's back page (its terms, or a blank "update your information" form).
 
         Distinctions that come up often:
         - Explanation of Benefits describes a claim already processed (billed, plan paid, you owe; "this

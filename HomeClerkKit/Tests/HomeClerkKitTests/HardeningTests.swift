@@ -74,6 +74,17 @@ import Testing
         #expect(analysis.error != nil && analysis.documents.isEmpty)
     }
 
+    /// A reader whose boundaries are found separately: however many documents and whatever pages
+    /// it names, its reply is one document covering the scan, at its lowest confidence.
+    @Test func aWholeScanReplyIsOneDocumentWhateverItsPages() {
+        let reply = #"{"summary":"s","documents":[{"first_page":1,"last_page":7,"confidence":0.8,"document_type":"Bill","area":"Utilities","vendor":"Acme_Power"},{"first_page":9,"last_page":3,"confidence":0.6,"document_type":"Receipt","area":"Shopping"}]}"#
+        let analysis = FacetSchema.parse(reply, pageCount: 2, modelName: "Apple", wholeScan: true)
+        #expect(analysis.error == nil)
+        #expect(analysis.documents.map { $0.firstPage...$0.lastPage } == [1...2])
+        #expect(analysis.documents.first?.facets.vendor == "Acme_Power" && analysis.documents.first?.confidence == 0.6)
+        #expect(FacetSchema.parse(reply, pageCount: 2, modelName: "Apple").error != nil)
+    }
+
     /// One document is the whole scan, whatever pages the model wrote (Apple's model has written
     /// 5337–5341 for a 5-page scan).
     @Test(arguments: ["5337,5341", "0,0", "3,2", "1,1"])
