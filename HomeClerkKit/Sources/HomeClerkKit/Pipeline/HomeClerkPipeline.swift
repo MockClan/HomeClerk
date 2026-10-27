@@ -159,6 +159,7 @@ public final class HomeClerkPipeline: @unchecked Sendable {
                 events(.problem("After recovering interrupted filings, the duplicate list couldn't be rebuilt: \(error.localizedDescription)"))
             }
         }
+        BackfillApplier.recordUnrecordedDuplicates(index, duplicates: duplicates, organized: settings.outboxFolder)
         events(.ready(inbox: settings.inboxFolder, organized: settings.outboxFolder, review: settings.reviewFolder))
         let (queue, processor, watcher, gate, events) = (self.queue, self.processor, self.watcher, self.gate, self.events)
         // One document at a time, in the order they became ready

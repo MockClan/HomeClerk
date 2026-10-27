@@ -59,23 +59,35 @@ public enum Separators {
     }
 
     /// Writes each section of `pdf` as its own PDF in `folder`, named after the scan with the
-    /// section's place ("statement part 2 of 3.pdf"). Returns them in order.
+    /// section's place ("statement part 2 of 3.pdf"). Returns them in order. All or none: if one
+    /// can't be written, those already written are removed, so no page is read twice.
     public static func write(_ sections: [[Int]], of pdf: URL, to folder: URL) throws -> [URL] {
         guard let source = PDFDocument(url: pdf) else { throw PDFTools.Failure("The scan couldn't be opened to separate it.") }
         let stem = pdf.deletingPathExtension().lastPathComponent
-        return try sections.enumerated().map { index, pages in
-            let part = PDFDocument()
-            for number in pages {
-                guard let page = source.page(at: number - 1)?.copy() as? PDFPage else {
-                    throw PDFTools.Failure("Page \(number) of the scan couldn't be copied.")
-                }
-                part.insert(page, at: part.pageCount)
+        var written: [URL] = []
+        do {
+            for (index, pages) in sections.enumerated() {
+                written.append(try write(pages, of: source, named: sections.count == 1 ? "\(stem) without blank pages"
+                                                                     : "\(stem) part \(index + 1) of \(sections.count)", to: folder))
             }
-            guard let data = part.dataRepresentation() else { throw PDFTools.Failure("A section of the scan couldn't be saved.") }
-            let name = sections.count == 1 ? "\(stem) without blank pages" : "\(stem) part \(index + 1) of \(sections.count)"
-            let url = FileOrganizer.unique(folder.appendingPathComponent("\(name).pdf"))
-            try PrivateFile.write(data, to: url)
-            return url
+        } catch {
+            for part in written { try? FileManager.default.removeItem(at: part) }
+            throw error
         }
+        return written
+    }
+
+    private static func write(_ pages: [Int], of source: PDFDocument, named name: String, to folder: URL) throws -> URL {
+        let part = PDFDocument()
+        for number in pages {
+            guard let page = source.page(at: number - 1)?.copy() as? PDFPage else {
+                throw PDFTools.Failure("Page \(number) of the scan couldn't be copied.")
+            }
+            part.insert(page, at: part.pageCount)
+        }
+        guard let data = part.dataRepresentation() else { throw PDFTools.Failure("A section of the scan couldn't be saved.") }
+        let url = FileOrganizer.unique(folder.appendingPathComponent("\(name).pdf"))
+        try PrivateFile.write(data, to: url)
+        return url
     }
 }

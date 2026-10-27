@@ -7,9 +7,11 @@ import os
 /// Two checks:
 /// - Exact — the same file bytes (a PDF dropped into the inbox twice). Free: runs before any AI call.
 /// - Near — a rescan of the same paper. The Simhash of the OCR text must be within the Hamming
-///   threshold *and* the key facets (vendor, date, person, amount, vehicle, pet) must match. Text
-///   similarity alone isn't enough: the same form letter sent to several family members, or a
-///   monthly statement, differs only in a name or date and scores as near-identical.
+///   threshold *and* the key facets (vendor, date, person, amount, vehicle, pet) and description
+///   must match. Text similarity alone isn't enough: the same form letter sent to several family
+///   members, a monthly statement, or a course evaluation filled in by someone else differs only in
+///   a name, a date, or handwriting the OCR barely reads, and scores as near-identical. A person,
+///   vehicle, pet, or description that one reading found and the other didn't still matches.
 public final class DuplicateDetector: @unchecked Sendable {
     public static let indexFileName = ".simhash-index.json"
 
@@ -20,16 +22,19 @@ public final class DuplicateDetector: @unchecked Sendable {
         var fingerprint: UInt64 = 0
         var label = ""
         var sha256: String?
-        /// Key facets; nil for split segments and for entries written before facet matching.
+        /// Key facets; nil for whole piles and for entries written before facet matching.
         var key: String?
+        /// The description, as a key; nil in entries written before it was compared.
+        var about: String?
 
-        enum CodingKeys: String, CodingKey { case fingerprint, label, sha256, key }
+        enum CodingKeys: String, CodingKey { case fingerprint, label, sha256, key, about }
 
-        init(fingerprint: UInt64, label: String, sha256: String?, key: String?) {
+        init(fingerprint: UInt64, label: String, sha256: String?, key: String?, about: String?) {
             self.fingerprint = fingerprint
             self.label = label
             self.sha256 = sha256
             self.key = key
+            self.about = about
         }
 
         init(from decoder: Decoder) throws {
@@ -38,6 +43,7 @@ public final class DuplicateDetector: @unchecked Sendable {
             label = try c.decodeIfPresent(String.self, forKey: .label) ?? ""
             sha256 = try c.decodeIfPresent(String.self, forKey: .sha256)
             key = try c.decodeIfPresent(String.self, forKey: .key)
+            about = try c.decodeIfPresent(String.self, forKey: .about)
         }
 
         func encode(to encoder: Encoder) throws {
@@ -46,6 +52,7 @@ public final class DuplicateDetector: @unchecked Sendable {
             try c.encode(label, forKey: .label)
             try c.encode(sha256, forKey: .sha256)
             try c.encode(key, forKey: .key)
+            try c.encodeIfPresent(about, forKey: .about)
         }
     }
 
@@ -95,20 +102,61 @@ public final class DuplicateDetector: @unchecked Sendable {
     public func nearDuplicate(ocrText: String, facets: DocumentFacets) -> String? {
         guard ocrText.utf16.count >= Self.minTextLength else { return nil }
         let fingerprint = Simhash.compute(ocrText)
-        let key = Self.facetKey(facets)
+        let key = Self.facetKey(facets), about = TextRules.key(facets.description)
         return lock.withLock {
             index.first {
-                $0.key == key && Simhash.hammingDistance(fingerprint, $0.fingerprint) <= hammingThreshold
+                guard let other = $0.key, Self.sameFacets(key, other) else { return false }
+                return Self.sameOrUnknown(about, $0.about ?? "")
+                    && Simhash.hammingDistance(fingerprint, $0.fingerprint) <= hammingThreshold
             }?.label
         }
     }
 
-    /// Records a filed document. Pass nil `facets` for a split segment, which then only matches
-    /// as an exact duplicate of the whole scan.
-    public func register(ocrText: String, sha256: String, facets: DocumentFacets?, label: String) {
+    /// Vendor, date, and amount must agree; person, vehicle, and pet may be missing from one reading.
+    static func sameFacets(_ a: String, _ b: String) -> Bool {
+        let x = a.split(separator: "|", omittingEmptySubsequences: false)
+        let y = b.split(separator: "|", omittingEmptySubsequences: false)
+        guard x.count == 6, y.count == 6 else { return a == b }
+        return [0, 1, 3].allSatisfy { x[$0] == y[$0] } && [2, 4, 5].allSatisfy { sameOrUnknown(x[$0], y[$0]) }
+    }
+
+    static func sameOrUnknown<S: StringProtocol>(_ a: S, _ b: S) -> Bool { a.isEmpty || b.isEmpty || a == b }
+
+    /// Adds the description to entries recorded before it was compared, by label, so it's compared
+    /// for them too. Returns how many were filled in.
+    @discardableResult
+    public func describe(_ facets: [String: DocumentFacets]) -> Int {
+        lock.withLock {
+            var described = 0
+            for i in index.indices where index[i].key != nil && index[i].about == nil {
+                guard let found = facets[index[i].label] else { continue }
+                index[i].about = TextRules.key(found.description)
+                described += 1
+            }
+            if described > 0 { save() }
+            return described
+        }
+    }
+
+    /// Every label recorded, e.g. to find filed documents that aren't.
+    public func labels() -> Set<String> { lock.withLock { Set(index.map(\.label)) } }
+
+    /// Records a filed document. Pass nil `facets` for a whole pile, which then only matches as an
+    /// exact duplicate; pass nil `sha256` for a document whose file no scan could match byte for byte.
+    public func register(ocrText: String, sha256: String?, facets: DocumentFacets?, label: String) {
         let entry = Self.entry(ocrText: ocrText, sha256: sha256, facets: facets, label: label)
         lock.withLock {
             index.append(entry)
+            save()
+        }
+    }
+
+    /// Records several filed documents at once, saving the index once.
+    public func register(_ documents: [(ocrText: String, sha256: String?, facets: DocumentFacets?, label: String)]) {
+        guard !documents.isEmpty else { return }
+        let entries = documents.map { Self.entry(ocrText: $0.ocrText, sha256: $0.sha256, facets: $0.facets, label: $0.label) }
+        lock.withLock {
+            index.append(contentsOf: entries)
             save()
         }
     }
@@ -159,9 +207,10 @@ public final class DuplicateDetector: @unchecked Sendable {
                 TextRules.key(f.vehicle), TextRules.key(f.pet)].joined(separator: "|")
     }
 
-    private static func entry(ocrText: String, sha256: String, facets: DocumentFacets?, label: String) -> Entry {
+    private static func entry(ocrText: String, sha256: String?, facets: DocumentFacets?, label: String) -> Entry {
         let key = facets.flatMap { ocrText.utf16.count < minTextLength ? nil : facetKey($0) }
-        return Entry(fingerprint: Simhash.compute(ocrText), label: label, sha256: sha256, key: key)
+        return Entry(fingerprint: Simhash.compute(ocrText), label: label, sha256: sha256, key: key,
+                     about: key == nil ? nil : facets.map { TextRules.key($0.description) })
     }
 
     private func load() {

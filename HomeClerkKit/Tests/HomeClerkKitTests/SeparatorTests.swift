@@ -84,4 +84,81 @@ import Testing
         #expect(events.value.contains(.separated(source: pile, parts: 2)))
         #expect(!events.value.contains { if case .filed = $0 { true } else { false } })
     }
+
+    @Test(.requiresOCR) func aDocumentInAPileThatsAlreadyFiledGoesToDuplicates() async throws {
+        var settings = HomeClerkSettings(values: ["basepath": .string(temp.url.path)])
+        settings.preserveOriginals = false
+        try FileManager.default.createDirectory(at: settings.inboxFolder, withIntermediateDirectories: true)
+        let receiptText = "CORNER HARDWARE\nSALES RECEIPT\nStore 12 Register 3\nFebruary 10 2026\nWood screws 6.40\n"
+            + "Hinges 12.00\nTotal 18.40\nPaid with card ending 0000\nReturns accepted within thirty days with this receipt"
+        func receipt(_ page: Int) -> FacetDocument {
+            FacetDocument(firstPage: page, lastPage: page, facets: DocumentFacets(documentType: "Receipt", area: "Home",
+                vendor: "Corner_Hardware", description: "Hardware_Receipt", documentDate: "2026-02-10", amount: Decimal(string: "18.40")),
+                confidence: 0.95)
+        }
+        let bill = settings.inboxFolder.appendingPathComponent("bill.pdf")
+        let pile = settings.inboxFolder.appendingPathComponent("pile.pdf")
+        let rescan = settings.inboxFolder.appendingPathComponent("rescan.pdf")
+        try TestPDF.make(bill, pages: [DocumentProcessorTests.billText])
+        // The bill again, and two copies of a receipt: copies in one pile are kept
+        try TestPDF.make(pile, pages: [DocumentProcessorTests.billText, receiptText, receiptText])
+        try TestPDF.make(rescan, pages: [receiptText + "\n"])
+        let index = DocumentIndex(url: temp.url.appendingPathComponent(DocumentIndex.fileName))
+        let processor = DocumentProcessor(settings: settings, taxonomy: TestData.taxonomy,
+            analyzer: FakeAnalyzer("Fake", .init(documents: [DocumentProcessorTests.bill()], summary: "A bill."),
+                                   .init(documents: [DocumentProcessorTests.bill(), receipt(2), receipt(3)], summary: "A pile."),
+                                   .init(documents: [receipt(1)], summary: "A receipt.")),
+            duplicates: DuplicateDetector(duplicatesFolder: settings.duplicatesFolder), index: index,
+            finisher: Finisher(makeSearchable: false, applyTags: false, createReminders: false, remindersList: "x",
+                               expirationLeadDays: 30),
+            events: { _ in }, today: { "2026-03-04" })
+        await processor.process(bill)
+        await processor.process(pile)
+
+        #expect(index.load().map(\.pages) == [[1, 1], [2, 2], [3, 3]])
+        let part = settings.duplicatesFolder.appendingPathComponent("pile page 1.pdf")
+        #expect(PDFDocument(url: part)?.pageCount == 1)
+        let reason = try String(contentsOf: ReviewProposal.reasonURL(for: part), encoding: .utf8)
+        #expect(reason.hasPrefix("Duplicate of: Bills - Utilities/2026-02-03-Acme_Power-Electric_Bill-88.12.pdf\nWhy: page 1 of pile.pdf"))
+        #expect(ReviewProposal.load(for: part)?.documents.count == 1)
+
+        // A document filed from a pile is caught when it's scanned again
+        await processor.process(rescan)
+        #expect(FileManager.default.fileExists(atPath: settings.duplicatesFolder.appendingPathComponent("rescan.pdf").path))
+        #expect(index.load().count == 3)
+    }
+
+    @Test(.requiresOCR) func aPileFilesWhatItsSureOfAndReviewsTheRest() async throws {
+        var settings = HomeClerkSettings(values: ["basepath": .string(temp.url.path)])
+        settings.preserveOriginals = false
+        try FileManager.default.createDirectory(at: settings.inboxFolder, withIntermediateDirectories: true)
+        let pile = settings.inboxFolder.appendingPathComponent("pile.pdf")
+        try TestPDF.make(pile, pages: [DocumentProcessorTests.billText, "MULTI-POINT INSPECTION\nBrakes ___  Tires ___\n"])
+        let sure = DocumentProcessorTests.bill(confidence: 0.95, pages: 1...1)
+        let unsure = FacetDocument(firstPage: 2, lastPage: 2,
+                                   facets: DocumentFacets(documentType: "Form", area: "Vehicle"), confidence: 0.4)
+        let index = DocumentIndex(url: temp.url.appendingPathComponent(DocumentIndex.fileName))
+        let events = Locked<[PipelineEvent]>([])
+        let processor = DocumentProcessor(settings: settings, taxonomy: TestData.taxonomy,
+            analyzer: FakeAnalyzer("Fake", .init(documents: [sure, unsure], summary: "A bill, then an unlabeled form.")),
+            duplicates: DuplicateDetector(duplicatesFolder: settings.duplicatesFolder), index: index,
+            finisher: Finisher(makeSearchable: false, applyTags: false, createReminders: false, remindersList: "x",
+                               expirationLeadDays: 30),
+            events: { event in events.mutate { $0.append(event) } }, today: { "2026-01-01" })
+        await processor.process(pile)
+
+        // The bill is filed, from page 1 only
+        let filed = try #require(index.load().first)
+        #expect(index.load().count == 1 && filed.pages == [1, 1])
+        #expect(PDFDocument(url: URL(fileURLWithPath: filed.path))?.pageCount == 1)
+        // Page 2 waits in Review as its own scan, with its proposal and why
+        let part = settings.reviewFolder.appendingPathComponent("pile page 2.pdf")
+        #expect(PDFDocument(url: part)?.pageCount == 1)
+        #expect(ReviewProposal.load(for: part)?.documents.map { $0.firstPage...$0.lastPage } == [1...1])
+        let reason = try String(contentsOf: ReviewProposal.reasonURL(for: part), encoding: .utf8)
+        #expect(reason.hasPrefix("Confidence 40% below threshold 70% for page 2 of pile.pdf; the rest of that scan was filed."))
+        #expect(!FileManager.default.fileExists(atPath: pile.path))
+        #expect(events.value.contains { if case .filed = $0 { true } else { false } })
+        #expect(events.value.contains { if case let .review(path, _, _, _, _) = $0 { path == part } else { false } })
+    }
 }

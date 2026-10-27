@@ -167,6 +167,10 @@ public struct DuplicateItem: Equatable, Sendable, Identifiable {
     public var original: URL?
     public var originalLabel: String
     public var why: String
+    /// A whole pile, set aside because every document in it was already filed; `original` is only the first of them.
+    public var wholePile = false
+
+    static let wholePileReason = "every document in it is already filed"
 }
 
 extension ReviewActions {
@@ -186,7 +190,8 @@ extension ReviewActions {
                 let original = label.isEmpty ? nil : settings.outboxFolder.appendingPathComponent(label)
                 let exists = original.map { FileOrganizer.isInside($0, settings.outboxFolder)
                     && FileManager.default.fileExists(atPath: $0.path) } ?? false
-                return DuplicateItem(url: scan, original: exists ? original : nil, originalLabel: label, why: why)
+                return DuplicateItem(url: scan, original: exists ? original : nil, originalLabel: label, why: why,
+                                     wholePile: why == DuplicateItem.wholePileReason)
             }
     }
 

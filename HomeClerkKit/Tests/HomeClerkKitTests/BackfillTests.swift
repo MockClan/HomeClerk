@@ -124,4 +124,17 @@ final class ByNameAnalyzer: FacetAnalyzer, @unchecked Sendable {
         let sha = BackfillApplier.sha256(try Data(contentsOf: settings.outboxFolder.appendingPathComponent("Bills - Utilities/a.pdf")))
         #expect(duplicates.exactDuplicate(sha256: sha) == "Bills - Utilities/a.pdf")
     }
+
+    @Test func recordsFiledDocumentsTheDuplicateIndexDoesntKnow() throws {
+        try filed("Bills - Utilities/a.pdf")
+        try filed("Bills - Utilities/b.pdf", source: "pile.pdf")
+        let duplicates = DuplicateDetector(duplicatesFolder: settings.duplicatesFolder)
+        duplicates.register(ocrText: "", sha256: "sha-a", facets: nil, label: "Bills - Utilities/a.pdf")
+        let index = DocumentIndex(url: settings.basePath.appendingPathComponent(DocumentIndex.fileName))
+        #expect(BackfillApplier.recordUnrecordedDuplicates(index, duplicates: duplicates, organized: settings.outboxFolder) == 1)
+        #expect(duplicates.labels() == ["Bills - Utilities/a.pdf", "Bills - Utilities/b.pdf"])
+        #expect(duplicates.exactDuplicate(sha256: "sha-a") == "Bills - Utilities/a.pdf")
+        // Once is enough
+        #expect(BackfillApplier.recordUnrecordedDuplicates(index, duplicates: duplicates, organized: settings.outboxFolder) == 0)
+    }
 }
