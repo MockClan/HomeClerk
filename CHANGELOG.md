@@ -9,10 +9,44 @@ it to the version and date, and the release workflow publishes that section as t
 - A pile of documents scanned as one PDF is split far more reliably. Pages are numbered for the
   reader, and pages about one transaction or matter stay together — including an invoice and the
   receipt for paying it.
-- Apple Intelligence finds where each document starts first, then reads each one on its own.
-- Separator pages: put a blank page (or, for double-sided scanning, a blank sheet) between documents
-  and turn on Settings ▸ General ▸ Between documents in a pile. Each section is read on its own, and
-  double-sided scans lose the blank backs of single-sided pages.
+- Apple Intelligence finds where each document starts first, then reads each one on its own. When
+  it can't tell, the scan waits in Review to be split instead of being filed as one document.
+- In a pile, the documents the reader is sure of are filed and only an uncertain one waits in
+  Review, as its own scan ("… pages 3–4.pdf") — instead of the whole pile waiting.
+- Paperwork with no amount of its own — a shop's inspection checklist after its invoice, even one
+  dated the same day — stays with the document it came with. A page after a document's printed
+  last page ("Page 4 of 4") is read as a document of its own unless it's plainly that document's
+  back page.
+- Separator pages: put a blank page (or, for double-sided scanning, a blank sheet) between
+  documents and turn on Settings ▸ General ▸ Between documents in a pile. Each section is read on
+  its own, and double-sided scans lose the blank backs of single-sided pages. The pile goes to the
+  Trash unless a verified copy of it is kept in _originals.
+
+**Duplicates**
+- A document in a pile that's already filed — scanned before on its own or in another pile — is
+  set aside in Duplicates ("… page 3.pdf") and the rest of the pile is filed. Several copies of one
+  form in the same pile are all kept. Documents filed from piles before this version are checked
+  too.
+- A rescan is recognized even when one reading found the person (or vehicle or pet) and the other
+  didn't, and forms filled in by different people aren't taken for each other when the reader
+  describes them differently.
+- Tidy Up ▸ Duplicates also lists documents filed twice — the same paper from two scans, even when
+  the two readings describe it differently, or a scan of some of its pages beside one of all of
+  them. Copies within one pile aren't listed.
+- Choose which copy to keep: the two are side by side, each with its page count and file size,
+  and Keep This One under each. The other copy goes to the Trash — nothing is overwritten — and ⌘Z
+  brings it back. A kept copy named with a "_2" takes the plain name. Keeping the copy with fewer
+  pages asks first. Or Keep Both.
+- A new scan set aside as a duplicate can be the one you keep, when it's the better scan: it takes
+  the filed copy's place — same name, folder, details, and tags — and the filed copy goes to the
+  Trash.
+
+**Documents filed in parts**
+- Tidy Up ▸ Filed in Parts finds a document filed in two parts — its first pages from one scan and
+  the rest from another — by the page numbers printed on it ("Page 3 of 4"), and puts it back
+  together: Combine. Or select documents in Search and choose Combine into One Document. The
+  combined document keeps the name, folder, details, and tags of the part whose pages come first;
+  the other goes to the Trash, and ⌘Z separates them again.
 
 ## 1.0.0 — 2026-10-07
 

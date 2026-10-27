@@ -190,11 +190,14 @@ original title, date, notes, and PDF link match exactly. Ambiguous matches appea
 **A pile of documents in one scan** is split into separate documents, each named and filed on its
 own. Pages about one transaction or matter stay together: a multi-page statement, a letter and its
 enclosures, an invoice and the receipt for paying it. Claude and Ollama read the whole pile at
-once (Ollama split every pile in the test set correctly); Apple Intelligence finds where each
-document starts in a first pass and then reads each one, which works but misses more. For large piles, or whenever you want to decide yourself, put a blank page
-between documents and choose Settings ▸ General ▸ **Between documents in a pile** ▸ *A blank page*
+once; Apple Intelligence finds where each document starts in a first pass and then reads each
+one, which works but misses more, and sends a pile it can't split to Review. For large piles, or
+whenever you want to decide yourself, put a blank page between documents and choose Settings ▸ General ▸ **Between documents in a pile** ▸ *A blank page*
 (or *A blank sheet* for double-sided scanning, which also drops the blank backs of single-sided
 pages). Each section is then read on its own.
+
+If the reader is unsure about one document in a pile, the rest are filed and only that one waits in
+Review, as its own scan named for its pages (`scan pages 3–4.pdf`) with the reader's proposal.
 
 A PDF that needs a password to open — statements banks and insurers email often are — waits in
 Review unread. Type its password there and HomeClerk saves an unlocked copy and reads it as usual;
