@@ -20,12 +20,28 @@ public enum AIProvider: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
+/// What marks where one document ends and the next begins in a pile scanned together.
+public enum ScanSeparator: String, CaseIterable, Identifiable, Sendable {
+    /// Nothing: the reader works out where each document starts.
+    case none = "None"
+    /// A blank page between documents (single-sided scanning).
+    case blankPage = "BlankPage"
+    /// A blank sheet between documents — both sides blank — for double-sided scanning. Other
+    /// blank pages (the backs of single-sided pages) are dropped.
+    case blankSheet = "BlankSheet"
+
+    public var id: String { rawValue }
+}
+
 public struct HomeClerkSettings: Sendable, Equatable {
 
     /// The HomeClerk folder; Inbox, Organized, _review, _duplicates, and _originals are inside it.
     public var basePath: URL
     /// Keep a copy of each scan, as it arrived, in _originals.
     public var preserveOriginals = true
+    /// Blank pages or sheets put between documents scanned as one pile. Each section between
+    /// them is read on its own (and may still be split further).
+    public var scanSeparator = ScanSeparator.none
     /// Restrict document analysis to Apple on-device or a loopback Ollama endpoint.
     public var localReadersOnly = false
 
@@ -187,6 +203,7 @@ public struct HomeClerkSettings: Sendable, Equatable {
         }
         basePath = Self.followingFolderLink(basePath)
         preserveOriginals = flag("PreserveOriginals", preserveOriginals)
+        scanSeparator = text("ScanSeparator").flatMap(ScanSeparator.init(rawValue:)) ?? scanSeparator
         localReadersOnly = flag("LocalReadersOnly", localReadersOnly)
         if let provider = text("AiProvider").flatMap(AIProvider.init(named:)) { aiProvider = provider }
         if let fallback = text("FallbackProvider") { fallbackProvider = AIProvider(named: fallback) }
@@ -207,7 +224,8 @@ public struct HomeClerkSettings: Sendable, Equatable {
 
     /// Each setting's stored name and value, as `SettingsStore` saves it.
     var storedValues: [(key: String, value: Any)] {
-        [("BasePath", basePath.path), ("PreserveOriginals", preserveOriginals), ("LocalReadersOnly", localReadersOnly), ("AiProvider", aiProvider.rawValue),
+        [("BasePath", basePath.path), ("PreserveOriginals", preserveOriginals), ("ScanSeparator", scanSeparator.rawValue),
+         ("LocalReadersOnly", localReadersOnly), ("AiProvider", aiProvider.rawValue),
          ("FallbackProvider", fallbackProvider?.rawValue ?? ""), ("ClaudeModel", claudeModel), ("OllamaModel", ollamaModel),
          ("OllamaUnloadMinutes", ollamaUnloadMinutes),
          ("OllamaBaseUrl", ollamaBaseURL.absoluteString), ("AppleModel", appleModel),
@@ -227,6 +245,7 @@ public struct HomeClerkSettings: Sendable, Equatable {
         return [
             ("BasePath", basePath == Self.defaultBasePath ? "default folder" : "custom folder (path omitted)"),
             ("PreserveOriginals", String(preserveOriginals)),
+            ("ScanSeparator", scanSeparator.rawValue),
             ("LocalReadersOnly", String(localReadersOnly)),
             ("AiProvider", aiProvider.rawValue),
             ("FallbackProvider", fallbackProvider?.rawValue ?? "none"),

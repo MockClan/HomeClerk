@@ -50,12 +50,19 @@ public struct EvalRunner: Sendable {
             if let error = analysis.error {
                 return CaseScore(evalCase: c, observed: ObservedFacts(), fields: [], error: error)
             }
-            // Test cases are single documents, so score the first and record any spurious split
-            let first = analysis.documents[0]
+            let split = EvalScorer.split(c, pageCount: pages, observed: analysis.documents)
+            let first = analysis.documents.sorted { $0.firstPage < $1.firstPage }[0]
             let observed = ObservedFacts(facets: first.facets, router: router, names: names, confidence: first.confidence,
                                          splitCount: analysis.documents.count > 1 ? analysis.documents.count : 0,
                                          reasoning: analysis.summary)
-            return EvalScorer.score(c, observed, router: router)
+            // One document: score it. Several: score each against the one found at the same pages.
+            guard !c.documents.isEmpty else {
+                var score = EvalScorer.score(c, observed, router: router)
+                score.fields.insert(split, at: 0)
+                return score
+            }
+            let fields = [split] + EvalScorer.scoreDocuments(c, observed: analysis.documents, router: router, names: names)
+            return CaseScore(evalCase: c, observed: observed, fields: fields, error: nil)
         } catch {
             return CaseScore(evalCase: c, observed: ObservedFacts(), fields: [], error: "\(error)")
         }
@@ -70,7 +77,8 @@ public struct EvalRunner: Sendable {
         let cache = manifest.ocrCacheURL(c)
         if let text = try? String(contentsOf: cache, encoding: .utf8), let json = try? JSONValue(parsing: text),
            let ocrText = json["Text"]?.stringValue, let pages = json["Pages"]?.doubleValue.flatMap(Int.init(checking:)) {
-            return (ocrText, pages)
+            // Text cached before pages were numbered is numbered the way a live scan's is now
+            return (TextRecognizer.joined(TextRecognizer.pages(of: ocrText)), pages)
         }
         let (text, pages) = try await TextRecognizer.text(ofPDF: manifest.scanURL(c))
         // A blank result is an OCR failure, not a blank scan — every test document has text.

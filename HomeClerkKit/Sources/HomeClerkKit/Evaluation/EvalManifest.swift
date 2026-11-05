@@ -34,6 +34,9 @@ public struct EvalCase: Sendable {
     public var expected: ExpectedFacts
     /// Fields a human still has to confirm; reported but never scored.
     public var verify: [String]
+    /// A scan holding several documents: each one's pages and expected facts. Empty for a scan
+    /// that is one document, which `expected` describes.
+    public var documents: [ExpectedDocument]
 
     init(json: JSONValue) {
         id = json["id"]?.stringValue ?? ""
@@ -42,15 +45,38 @@ public struct EvalCase: Sendable {
         sha256 = json["sha256"]?.stringValue ?? ""
         expected = ExpectedFacts(json: json["expected"] ?? .object([]))
         verify = json["verify"]?.stringArray ?? []
+        documents = (json["documents"]?.arrayValue ?? []).compactMap(ExpectedDocument.init(json:))
     }
 
-    public init(id: String, expected: ExpectedFacts, verify: [String] = []) {
+    public init(id: String, expected: ExpectedFacts, verify: [String] = [], documents: [ExpectedDocument] = []) {
         self.id = id
         scan = ""
         why = ""
         sha256 = ""
         self.expected = expected
         self.verify = verify
+        self.documents = documents
+    }
+}
+
+/// One document in a scan that holds several: `"pages": [first, last]` and its `"expected"` facts.
+public struct ExpectedDocument: Sendable {
+    public var firstPage: Int
+    public var lastPage: Int
+    public var expected: ExpectedFacts
+
+    public init(firstPage: Int, lastPage: Int, expected: ExpectedFacts) {
+        self.firstPage = firstPage
+        self.lastPage = lastPage
+        self.expected = expected
+    }
+
+    init?(json: JSONValue) {
+        guard let pages = json["pages"]?.arrayValue?.compactMap({ $0.doubleValue.flatMap(Int.init(checking:)) }),
+              pages.count == 2 else { return nil }
+        firstPage = pages[0]
+        lastPage = pages[1]
+        expected = ExpectedFacts(json: json["expected"] ?? .object([]))
     }
 }
 

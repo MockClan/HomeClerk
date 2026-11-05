@@ -187,6 +187,18 @@ original title, date, notes, and PDF link match exactly. Ambiguous matches appea
   how to make the rule: pick the senders whose bills you want filed, and their PDF attachments land
   in the Inbox as they arrive.
 
+**A pile of documents in one scan** is split into separate documents, each named and filed on its
+own. Pages about one transaction or matter stay together: a multi-page statement, a letter and its
+enclosures, an invoice and the receipt for paying it. Claude and Ollama read the whole pile at
+once; Apple Intelligence finds where each document starts in a first pass and then reads each
+one, which works but misses more, and sends a pile it can't split to Review. For large piles, or
+whenever you want to decide yourself, put a blank page between documents and choose Settings ▸ General ▸ **Between documents in a pile** ▸ *A blank page*
+(or *A blank sheet* for double-sided scanning, which also drops the blank backs of single-sided
+pages). Each section is then read on its own.
+
+If the reader is unsure about one document in a pile, the rest are filed and only that one waits in
+Review, as its own scan named for its pages (`scan pages 3–4.pdf`) with the reader's proposal.
+
 A PDF that needs a password to open — statements banks and insurers email often are — waits in
 Review unread. Type its password there and HomeClerk saves an unlocked copy and reads it as usual;
 the password isn't kept.
@@ -264,7 +276,7 @@ with Activity ▸ right-click ▸ **Send Back to Review**.
 
 | Tab | |
 | --- | --- |
-| **General** | The HomeClerk folder · keep a copy of each scan in `_originals` · open at login · show filed documents in Spotlight · emailed bills through a Mail rule |
+| **General** | The HomeClerk folder · keep a copy of each scan in `_originals` · separator pages between documents in a pile · open at login · show filed documents in Spotlight · emailed bills through a Mail rule |
 | **Analysis** | What reads documents, and the fallback · Claude model · Claude's monthly spending limit ($0 for none) · Apple model (on-device or Private Cloud Compute) · how sure a model must be to file (70%, and 85% for the fallback) |
 | **Ollama** | The model, chosen from what's downloaded and the recommended sizes, each with its memory, speed, and accuracy · how long the model stays in memory when idle (5 minutes unless you change it), what's loaded now, and Unload Now · the server address · start Ollama when it's needed |
 | **After Filing** | The Monday summary · the day-before notice for bills · searchable text layer · Finder tags · reminders, their list, and how far ahead of an expiry |
@@ -756,6 +768,10 @@ and renders `appearances.png`. See [`icon/README.md`](icon/README.md).
 `expected.json` of the correct facts, kept outside the repository. Each run writes a report to
 `runs/`, and OCR is cached so repeat runs only pay for the model. Run it before and after changing
 the prompt, the taxonomy, or the model.
+
+Splitting piles is measured with a separate, made-up test set: `swift scripts/make-split-tests.swift`
+writes it to `~/HomeClerk-TestData-Split`, and `eval --dir ~/HomeClerk-TestData-Split` scores where
+each reader split each pile (the `split` field) and each document it found.
 
 ### Project structure
 

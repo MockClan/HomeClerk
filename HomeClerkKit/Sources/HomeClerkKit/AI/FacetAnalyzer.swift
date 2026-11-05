@@ -65,7 +65,7 @@ public struct ResilientFacetAnalyzer: FacetAnalyzer {
         guard !Task.isCancelled else { return .failed("Cancelled") }
         let result = await withRetries(primary, ocrText, pageCount, pdf)
         guard !Task.isCancelled else { return .failed("Cancelled") }
-        guard let primaryError = result.error, let fallback else { return result }
+        guard let primaryError = result.error, let fallback else { return RelatedDocuments.merged(result) }
 
         var rescue = await withRetries(fallback, ocrText, pageCount, pdf)
         if let fallbackError = rescue.error {
@@ -74,7 +74,7 @@ public struct ResilientFacetAnalyzer: FacetAnalyzer {
             rescue.usedFallback = true
             rescue.primaryError = primaryError
         }
-        return rescue
+        return RelatedDocuments.merged(rescue)
     }
 
     private func withRetries(_ analyzer: any FacetAnalyzer, _ ocrText: String, _ pageCount: Int, _ pdf: URL) async

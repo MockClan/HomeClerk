@@ -97,8 +97,7 @@ func runEval(_ options: Options) async throws -> Int32 {
     case "ollama":
         analyzer = HomeClerkPipeline.analyzer(.ollama, settings: settings, taxonomy: taxonomy, profile: profile, ledger: nil)
     case "apple":
-        analyzer = AppleFacetAnalyzer(model: settings.appleModel, sendImages: settings.sendPageImages,
-                                      maxImagePages: settings.maxImagePages, taxonomy: taxonomy, profile: profile)
+        analyzer = HomeClerkPipeline.analyzer(.apple, settings: settings, taxonomy: taxonomy, profile: profile, ledger: nil)
     case let other:
         throw Failure(description: "--analyzer must be claude, ollama, or apple (got \(other))")
     }

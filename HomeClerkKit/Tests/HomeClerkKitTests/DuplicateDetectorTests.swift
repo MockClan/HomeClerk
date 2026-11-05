@@ -43,6 +43,41 @@ import Testing
         #expect(d.nearDuplicate(ocrText: rescan, facets: Self.facets("Jane_Smith")) == "Identity & Security/jane.pdf")
     }
 
+    @Test func theSameFormFilledInBySomeoneElseIsNotADuplicate() {
+        // Course evaluations: one template, handwriting the OCR barely reads; the reader tells them apart
+        let d = detector()
+        var knots = Self.facets(""), cooking = Self.facets("")
+        knots.description = "Knot_Tying_Course_Evaluation"
+        cooking.description = "Camp_Cooking_Course_Evaluation"
+        d.register(ocrText: Self.letter("member"), sha256: nil, facets: knots, label: "knots.pdf")
+        #expect(d.nearDuplicate(ocrText: Self.letter("member"), facets: cooking) == nil)
+        knots.description = "Knot Tying Course Evaluation"
+        #expect(d.nearDuplicate(ocrText: Self.letter("member"), facets: knots) == "knots.pdf")
+    }
+
+    @Test func entriesRecordedBeforeDescriptionsCanBeGivenThem() throws {
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        var knots = Self.facets(""), cooking = Self.facets("")
+        knots.description = "Knot_Tying_Course_Evaluation"
+        cooking.description = "Camp_Cooking_Course_Evaluation"
+        let old = #"[{"fingerprint": \#(Simhash.compute(Self.letter("member"))), "label": "knots.pdf", "sha256": null, "key": "\#(DuplicateDetector.facetKey(knots))"}]"#
+        try old.write(to: folder.appendingPathComponent(DuplicateDetector.indexFileName), atomically: true, encoding: .utf8)
+        let d = detector()
+        #expect(d.nearDuplicate(ocrText: Self.letter("member"), facets: cooking) == "knots.pdf")
+        #expect(d.describe(["knots.pdf": knots]) == 1)
+        #expect(detector().nearDuplicate(ocrText: Self.letter("member"), facets: cooking) == nil)
+        #expect(d.describe(["knots.pdf": knots]) == 0)
+    }
+
+    @Test func aPersonOneReadingMissedStillMatches() {
+        let d = detector()
+        d.register(ocrText: Self.letter("Jane Smith"), sha256: "sha-a", facets: Self.facets(""), label: "contract.pdf")
+        #expect(d.nearDuplicate(ocrText: Self.letter("Jane Smith"), facets: Self.facets("Jane_Smith")) == "contract.pdf")
+        // The date and amount still have to agree
+        #expect(d.nearDuplicate(ocrText: Self.letter("Jane Smith"), facets: Self.facets("Jane_Smith", date: "2025-09-19")) == nil)
+        #expect(d.nearDuplicate(ocrText: Self.letter("Jane Smith"), facets: Self.facets("Jane_Smith", amount: 5)) == nil)
+    }
+
     @Test func identicalFileIsAnExactDuplicateAndSurvivesRestart() {
         detector().register(ocrText: Self.letter("Jane Smith"), sha256: "sha-a", facets: Self.facets("Jane_Smith"), label: "jane.pdf")
         let reloaded = detector()

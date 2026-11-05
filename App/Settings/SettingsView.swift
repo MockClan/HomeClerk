@@ -70,6 +70,14 @@ private struct GeneralPane: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Toggle("Keep a copy of each scan as it arrived (_originals)", isOn: $settings.preserveOriginals)
+            Picker(selection: $settings.scanSeparator) {
+                Text("Nothing — HomeClerk works it out").tag(ScanSeparator.none)
+                Text("A blank page").tag(ScanSeparator.blankPage)
+                Text("A blank sheet (double-sided scanning)").tag(ScanSeparator.blankSheet)
+            } label: {
+                Text("Between documents in a pile")
+                Text("Put a blank page (or sheet) between documents you scan together, and each part is read on its own. With double-sided scanning, the blank backs of single-sided pages are dropped too.")
+            }
             Toggle("Open HomeClerk when you log in", isOn: $openAtLogin)
                 .onChange(of: openAtLogin) { HomeClerkModel.setOpenAtLogin(openAtLogin) }
             Toggle(isOn: $spotlight) {

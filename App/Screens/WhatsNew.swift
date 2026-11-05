@@ -14,7 +14,7 @@ struct WhatsNewItem: Identifiable {
 
 enum WhatsNew {
     /// Raise this when adding to `items`, so people who've seen the sheet see it again.
-    static let edition = 2
+    static let edition = 3
 
     /// Shown to someone who used the app under its old name.
     static let renamed = WhatsNewItem(symbol: "signature", title: "DocuSort is now HomeClerk",
@@ -26,6 +26,8 @@ enum WhatsNew {
 
     /// What's new since the last edition; the first run's Setup Assistant covers everything else.
     static let features: [WhatsNewItem] = [
+        WhatsNewItem(symbol: "square.stack.3d.up", title: "Scan a pile at once",
+                     detail: "A stack scanned as one PDF is split into its documents, keeping an invoice with its receipt. Or put a blank page between documents: Settings ▸ General ▸ Between documents in a pile."),
         WhatsNewItem(symbol: "folder.badge.gearshape", title: "New kinds of documents",
                      detail: "Computers, phones, and other devices get their own folder, and anything tagged work-expense is gathered in Employment - Expenses."),
         WhatsNewItem(symbol: "folder.badge.questionmark", title: "Move your folder",

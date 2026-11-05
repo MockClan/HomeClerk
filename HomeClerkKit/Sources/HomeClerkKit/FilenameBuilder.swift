@@ -43,7 +43,7 @@ public struct FilenameBuilder: Sendable {
     static func clean(_ value: String) -> String {
         let kept = value.trimmingCharacters(in: .whitespacesAndNewlines).unicodeScalars
             .map { $0 == " " ? "_" : $0 }
-            .filter { !["\0", "/", "\\", ":"].contains($0) }
+            .filter { !["\0", "/", "\\", ":"].contains($0) && !CharacterSet.controlCharacters.contains($0) }
         let collapsed = String(String.UnicodeScalarView(kept)).replacing(/_{2,}/, with: "_")
         return collapsed.trimmingCharacters(in: CharacterSet(charactersIn: "_-"))
     }
